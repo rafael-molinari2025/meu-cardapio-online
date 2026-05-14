@@ -2341,9 +2341,12 @@ ${wa ? `<div class="cta"><p>Faça seu pedido</p><a href="${wa}" target="_blank">
         if (emailEl) emailEl.textContent = user.email;
         const uidEl = document.getElementById('currentUserId');
         if (uidEl) uidEl.textContent = user.uid;
-        const savedBase = localStorage.getItem('cdp_githubBase');
         const githubBaseEl = document.getElementById('githubBase');
-        if (savedBase && githubBaseEl && !githubBaseEl.value) githubBaseEl.value = savedBase;
+        if (githubBaseEl && !githubBaseEl.value) {
+          const saved = localStorage.getItem('cdp_githubBase');
+          const autoDetected = window.location.origin + window.location.pathname.replace(/\/[^/]+$/, '');
+          githubBaseEl.value = saved || autoDetected;
+        }
         updateClientUrlHint();
       } else {
         currentUser = null;
