@@ -1,0 +1,2372 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cardápio Digital Pro · IA Edition</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,800;1,400;1,600&family=Outfit:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <style>
+    :root {
+      --bg: #0C0A09;
+      --bg2: #171412;
+      --bg3: #1E1B18;
+      --paper: #FBF7F0;
+      --ink: #1A1714;
+      --amber: #F59E0B;
+      --amber-soft: #FDE68A;
+      --amber-glow: rgba(245, 158, 11, .12);
+      --rose: #E11D48;
+      --rose-soft: #FECDD3;
+      --sage: #65A30D;
+      --muted: #9C8E80;
+      --line: rgba(255, 255, 255, .07);
+      --r: 14px;
+      --r2: 20px;
+      --shadow: 0 8px 32px rgba(0, 0, 0, .3);
+      --font-d: 'Playfair Display', Georgia, serif;
+      --font-b: 'Outfit', system-ui, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    body {
+      font-family: var(--font-b);
+      background: var(--bg);
+      color: var(--paper);
+      min-height: 100vh;
+      overflow-x: hidden
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg2)
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--muted);
+      border-radius: 3px
+    }
+
+    /* LAYOUT */
+    .shell {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      min-height: 100vh
+    }
+
+    @media(max-width:900px) {
+      .shell {
+        grid-template-columns: 1fr
+      }
+
+      .sidebar {
+        display: none !important
+      }
+    }
+
+    .sidebar {
+      background: var(--bg2);
+      border-right: 1px solid var(--line);
+      padding: 28px 16px;
+      display: flex;
+      flex-direction: column;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+    }
+
+    .logo {
+      padding: 0 10px;
+      margin-bottom: 36px
+    }
+
+    .logo h1 {
+      font-family: var(--font-d);
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: -.5px
+    }
+
+    .logo h1 em {
+      color: var(--amber);
+      font-style: italic
+    }
+
+    .logo p {
+      font-size: 10px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-top: 4px
+    }
+
+    .nav-btn {
+      width: 100%;
+      padding: 11px 14px;
+      border-radius: 10px;
+      border: none;
+      background: none;
+      color: var(--muted);
+      font-family: var(--font-b);
+      font-size: 13px;
+      text-align: left;
+      cursor: pointer;
+      transition: .2s;
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      margin-bottom: 2px;
+    }
+
+    .nav-btn:hover {
+      background: var(--bg3);
+      color: var(--paper)
+    }
+
+    .nav-btn.active {
+      background: var(--amber-glow);
+      color: var(--amber);
+      font-weight: 600
+    }
+
+    .nav-btn svg {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0
+    }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 14px;
+      border-top: 1px solid var(--line)
+    }
+
+    .sidebar-footer .ai-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      color: var(--amber);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .sidebar-footer .ai-badge::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--amber);
+      box-shadow: 0 0 12px var(--amber);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: .4
+      }
+    }
+
+    .content {
+      padding: 36px 40px;
+      max-width: 1200px
+    }
+
+    @media(max-width:700px) {
+      .content {
+        padding: 20px 16px
+      }
+    }
+
+    /* PANELS */
+    .panel {
+      display: none;
+      animation: fadeUp .4s ease
+    }
+
+    .panel.active {
+      display: block
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(10px)
+      }
+
+      to {
+        opacity: 1;
+        transform: none
+      }
+    }
+
+    .page-head {
+      margin-bottom: 32px
+    }
+
+    .page-head .eyebrow {
+      font-size: 11px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--amber);
+      margin-bottom: 10px;
+      font-weight: 600
+    }
+
+    .page-head h2 {
+      font-family: var(--font-d);
+      font-size: clamp(32px, 4vw, 48px);
+      font-weight: 600;
+      line-height: 1.05;
+      letter-spacing: -1px
+    }
+
+    .page-head h2 em {
+      font-style: italic;
+      color: var(--amber)
+    }
+
+    .page-head p {
+      color: var(--muted);
+      font-size: 14px;
+      margin-top: 10px;
+      max-width: 580px;
+      line-height: 1.6
+    }
+
+    /* CARDS */
+    .card {
+      background: var(--bg2);
+      border: 1px solid var(--line);
+      border-radius: var(--r2);
+      padding: 28px;
+      margin-bottom: 20px
+    }
+
+    .card-title {
+      font-family: var(--font-d);
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center
+    }
+
+    .card-title small {
+      font-family: var(--font-b);
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 500
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 20px
+    }
+
+    @media(max-width:1000px) {
+
+      .grid-2,
+      .grid-3 {
+        grid-template-columns: 1fr
+      }
+    }
+
+    /* FORMS */
+    .field {
+      margin-bottom: 14px
+    }
+
+    label {
+      display: block;
+      font-size: 11px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 7px;
+      font-weight: 500
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      padding: 11px 14px;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      color: var(--paper);
+      border-radius: var(--r);
+      font-family: var(--font-b);
+      font-size: 14px;
+      transition: .2s;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      outline: none;
+      border-color: var(--amber);
+      box-shadow: 0 0 0 3px var(--amber-glow)
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 80px
+    }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px
+    }
+
+    /* BTNS */
+    .btn {
+      padding: 11px 20px;
+      border-radius: 50px;
+      border: none;
+      cursor: pointer;
+      font-family: var(--font-b);
+      font-size: 13px;
+      font-weight: 600;
+      transition: .2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-amber {
+      background: var(--amber);
+      color: var(--bg)
+    }
+
+    .btn-amber:hover {
+      background: var(--amber-soft);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(245, 158, 11, .25)
+    }
+
+    .btn-ghost {
+      background: none;
+      color: var(--paper);
+      border: 1px solid var(--line)
+    }
+
+    .btn-ghost:hover {
+      border-color: var(--amber);
+      color: var(--amber)
+    }
+
+    .btn-rose {
+      background: none;
+      color: var(--rose);
+      border: 1px solid rgba(225, 29, 72, .3);
+      padding: 7px 14px;
+      font-size: 12px
+    }
+
+    .btn-sm {
+      padding: 8px 14px;
+      font-size: 12px
+    }
+
+    .btn-ai {
+      background: linear-gradient(135deg, #F59E0B, #D97706);
+      color: var(--bg);
+      position: relative;
+      overflow: hidden
+    }
+
+    .btn-ai::after {
+      content: '✦ IA';
+      font-size: 9px;
+      letter-spacing: 2px;
+      background: var(--bg);
+      color: var(--amber);
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-left: 4px;
+    }
+
+    /* ITEMS */
+    .menu-item {
+      display: flex;
+      gap: 14px;
+      padding: 14px;
+      background: var(--bg);
+      border-radius: var(--r);
+      border: 1px solid var(--line);
+      margin-bottom: 8px;
+      align-items: center;
+      transition: .2s;
+    }
+
+    .menu-item:hover {
+      border-color: rgba(245, 158, 11, .2)
+    }
+
+    .menu-item img {
+      width: 70px;
+      height: 70px;
+      object-fit: cover;
+      border-radius: 10px;
+      flex-shrink: 0
+    }
+
+    .menu-item .placeholder-img {
+      width: 70px;
+      height: 70px;
+      border-radius: 10px;
+      background: var(--bg3);
+      flex-shrink: 0;
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      font-size: 22px;
+    }
+
+    .menu-item .info {
+      flex: 1;
+      min-width: 0
+    }
+
+    .menu-item .info h4 {
+      font-family: var(--font-d);
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 4px
+    }
+
+    .menu-item .info p {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden
+    }
+
+    .menu-item .info .cat-tag {
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--sage);
+      font-weight: 600;
+      margin-top: 4px
+    }
+
+    .menu-item .price {
+      font-family: var(--font-d);
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--amber);
+      white-space: nowrap
+    }
+
+    .menu-item .actions {
+      display: flex;
+      flex-direction: column;
+      gap: 4px
+    }
+
+    .icon-btn {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: 1px solid var(--line);
+      background: none;
+      color: var(--muted);
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      font-size: 13px;
+      transition: .2s;
+    }
+
+    .icon-btn:hover {
+      border-color: var(--amber);
+      color: var(--amber)
+    }
+
+    /* STATS */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px;
+      margin-bottom: 28px
+    }
+
+    .stat {
+      background: var(--bg2);
+      padding: 20px;
+      border-radius: var(--r2);
+      border: 1px solid var(--line)
+    }
+
+    .stat .lbl {
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px
+    }
+
+    .stat .val {
+      font-family: var(--font-d);
+      font-size: 32px;
+      font-weight: 600;
+      color: var(--amber)
+    }
+
+    /* AI PANEL */
+    .ai-section {
+      background: linear-gradient(135deg, rgba(245, 158, 11, .06), rgba(245, 158, 11, .02));
+      border: 1px solid rgba(245, 158, 11, .15);
+      border-radius: var(--r2);
+      padding: 28px;
+      margin-bottom: 20px;
+    }
+
+    .ai-section h3 {
+      font-family: var(--font-d);
+      font-size: 22px;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 10px
+    }
+
+    .ai-section h3 .spark {
+      color: var(--amber);
+      font-size: 18px
+    }
+
+    .ai-section>p {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 20px
+    }
+
+    .ai-output {
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: var(--r);
+      padding: 16px;
+      font-size: 14px;
+      line-height: 1.7;
+      white-space: pre-wrap;
+      min-height: 60px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .ai-output.loading {
+      color: var(--amber);
+      animation: pulse 1.5s infinite
+    }
+
+    .ai-chips {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 16px
+    }
+
+    .ai-chip {
+      padding: 7px 14px;
+      border-radius: 50px;
+      border: 1px solid var(--line);
+      background: none;
+      color: var(--paper);
+      font-family: var(--font-b);
+      font-size: 12px;
+      cursor: pointer;
+      transition: .2s;
+    }
+
+    .ai-chip:hover,
+    .ai-chip.active {
+      border-color: var(--amber);
+      color: var(--amber);
+      background: var(--amber-glow)
+    }
+
+    /* IMAGE EDITOR */
+    .img-editor {
+      background: var(--bg);
+      border-radius: var(--r);
+      padding: 20px;
+      text-align: center;
+      border: 2px dashed var(--line);
+      position: relative;
+      min-height: 200px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+    }
+
+    .img-editor.has-img {
+      border-style: solid;
+      border-color: rgba(245, 158, 11, .2)
+    }
+
+    .img-editor canvas {
+      max-width: 100%;
+      border-radius: 10px;
+      cursor: crosshair
+    }
+
+    .img-controls {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 14px
+    }
+
+    .img-slider {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      color: var(--muted)
+    }
+
+    .img-slider input[type=range] {
+      width: 120px;
+      accent-color: var(--amber)
+    }
+
+    /* PREVIEW */
+    .preview-frame {
+      background: var(--paper);
+      color: var(--ink);
+      border-radius: var(--r2);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      max-width: 500px;
+    }
+
+    .preview-header {
+      padding: 32px 24px 24px;
+      text-align: center;
+      border-bottom: 2px solid currentColor
+    }
+
+    .preview-header h4 {
+      font-family: var(--font-d);
+      font-size: 30px;
+      font-weight: 800;
+      letter-spacing: -1px
+    }
+
+    .preview-header p {
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      margin-top: 6px
+    }
+
+    .preview-body {
+      padding: 20px 24px;
+      max-height: 400px;
+      overflow-y: auto
+    }
+
+    .preview-cat {
+      font-family: var(--font-d);
+      font-style: italic;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      margin: 24px 0 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .preview-cat::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: rgba(26, 23, 20, .12)
+    }
+
+    .preview-item {
+      display: flex;
+      gap: 12px;
+      padding: 14px 0;
+      border-bottom: 1px dashed rgba(26, 23, 20, .12)
+    }
+
+    .preview-item:last-child {
+      border: none
+    }
+
+    .preview-item img {
+      width: 50px;
+      height: 50px;
+      border-radius: 8px;
+      object-fit: cover
+    }
+
+    .preview-item .txt strong {
+      font-family: var(--font-d);
+      font-size: 16px;
+      font-weight: 600;
+      display: block;
+      margin-bottom: 3px
+    }
+
+    .preview-item .txt p {
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.4
+    }
+
+    .preview-item .price {
+      font-family: var(--font-d);
+      font-weight: 600;
+      white-space: nowrap;
+      margin-left: auto
+    }
+
+    /* QR */
+    .qr-zone {
+      text-align: center;
+      padding: 20px
+    }
+
+    #qrcode {
+      display: inline-block;
+      padding: 16px;
+      background: #fff;
+      border-radius: 14px;
+      margin: 16px 0
+    }
+
+    /* MODAL */
+    .modal-bg {
+      position: fixed;
+      inset: 0;
+      background: rgba(12, 10, 9, .75);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+      padding: 20px;
+    }
+
+    .modal-bg.show {
+      display: flex
+    }
+
+    .modal {
+      background: var(--bg2);
+      border: 1px solid var(--line);
+      border-radius: var(--r2);
+      padding: 32px;
+      max-width: 560px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto
+    }
+
+    .modal h3 {
+      font-family: var(--font-d);
+      font-size: 26px;
+      margin-bottom: 20px
+    }
+
+    .modal-foot {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 20px
+    }
+
+    /* SOCIAL PREVIEW */
+    .social-card {
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: var(--r);
+      overflow: hidden;
+      margin-bottom: 14px;
+    }
+
+    .social-card .social-img {
+      width: 100%;
+      aspect-ratio: 1;
+      object-fit: cover;
+      display: block
+    }
+
+    .social-card .social-body {
+      padding: 14px
+    }
+
+    .social-card .social-body p {
+      font-size: 13px;
+      line-height: 1.6;
+      white-space: pre-wrap
+    }
+
+    .social-card .social-body .hashtags {
+      color: var(--amber);
+      font-size: 12px;
+      margin-top: 8px
+    }
+
+    /* TOAST */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--amber);
+      color: var(--bg);
+      padding: 13px 22px;
+      border-radius: 50px;
+      font-size: 13px;
+      font-weight: 600;
+      transform: translateY(120%);
+      transition: .4s;
+      z-index: 100;
+      box-shadow: var(--shadow);
+    }
+
+    .toast.show {
+      transform: translateY(0)
+    }
+
+    /* CONFIG KEY */
+    .api-config {
+      background: var(--bg3);
+      border: 1px solid var(--line);
+      border-radius: var(--r);
+      padding: 16px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .api-config input {
+      flex: 1;
+      font-family: monospace;
+      font-size: 12px
+    }
+
+    .api-config .status {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #555;
+      flex-shrink: 0
+    }
+
+    .api-config .status.ok {
+      background: var(--sage);
+      box-shadow: 0 0 8px rgba(101, 163, 13, .4)
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--muted)
+    }
+
+    .empty-state h4 {
+      font-family: var(--font-d);
+      font-size: 20px;
+      color: var(--paper);
+      margin-bottom: 8px
+    }
+
+    /* AUTH WALL */
+    #authWall {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      padding: 20px
+    }
+
+    #authWall .auth-box {
+      width: 100%;
+      max-width: 420px
+    }
+
+    #authWall .auth-logo {
+      text-align: center;
+      margin-bottom: 40px
+    }
+
+    #authWall .auth-logo h1 {
+      font-family: var(--font-d);
+      font-size: 36px;
+      font-weight: 600
+    }
+
+    #authWall .auth-logo h1 em {
+      color: var(--amber);
+      font-style: italic
+    }
+
+    #authWall .auth-logo p {
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-top: 6px
+    }
+
+    #authErr {
+      color: var(--rose);
+      font-size: 13px;
+      margin-bottom: 14px;
+      min-height: 18px
+    }
+
+    /* ORDER CARDS */
+    .order-card {
+      background: var(--bg3);
+      border: 1px solid var(--line);
+      border-radius: var(--r);
+      padding: 18px;
+      margin-bottom: 12px;
+      transition: .2s
+    }
+
+    .order-card.order-new {
+      border-color: var(--amber);
+      box-shadow: 0 0 0 1px var(--amber)
+    }
+
+    .order-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 10px
+    }
+
+    .order-head strong {
+      font-family: var(--font-d);
+      font-size: 18px
+    }
+
+    .order-badge {
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .5px;
+      margin-left: auto
+    }
+
+    .s-pending {
+      background: rgba(245, 158, 11, .2);
+      color: var(--amber)
+    }
+
+    .s-preparing {
+      background: rgba(59, 130, 246, .2);
+      color: #60A5FA
+    }
+
+    .s-ready {
+      background: rgba(101, 163, 13, .2);
+      color: var(--sage)
+    }
+
+    .s-served {
+      background: var(--line);
+      color: var(--muted)
+    }
+
+    .order-items {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 6px;
+      line-height: 1.6
+    }
+
+    .order-obs {
+      font-size: 12px;
+      color: var(--amber);
+      margin-bottom: 8px
+    }
+
+    .order-foot {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid var(--line)
+    }
+
+    .order-total {
+      font-family: var(--font-d);
+      font-size: 18px;
+      color: var(--paper)
+    }
+
+    .order-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap
+    }
+
+    .btn-sm {
+      padding: 7px 14px !important;
+      font-size: 12px !important
+    }
+
+    /* CLIENT URL PREVIEW */
+    .url-preview {
+      background: var(--bg3);
+      border: 1px solid var(--line);
+      border-radius: var(--r);
+      padding: 14px;
+      margin-top: 10px
+    }
+
+    .url-preview .url-label {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 6px
+    }
+
+    .url-preview code {
+      color: var(--amber);
+      font-size: 13px;
+      word-break: break-all;
+      display: block
+    }
+
+    .url-preview .uid-row {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 8px
+    }
+
+    .url-preview .uid-row code {
+      display: inline;
+      font-size: 12px
+    }
+  </style>
+</head>
+
+<body>
+  <!-- ===================== AUTH WALL ===================== -->
+  <div id="authWall">
+    <div class="auth-box">
+      <div class="auth-logo">
+        <h1>Cardápio<em>Pro</em></h1>
+        <p>IA Edition · v2.0</p>
+      </div>
+      <div class="card" style="padding:32px">
+        <h3 style="font-family:var(--font-d);font-size:22px;margin-bottom:6px">Entrar no painel</h3>
+        <p style="color:var(--muted);font-size:13px;margin-bottom:24px">Use o e-mail e senha do seu restaurante</p>
+        <div class="field"><label>E-mail</label><input type="email" id="authEmail" placeholder="seu@email.com"
+            onkeydown="if(event.key==='Enter')authLogin()"></div>
+        <div class="field"><label>Senha</label><input type="password" id="authPass" placeholder="••••••••"
+            onkeydown="if(event.key==='Enter')authLogin()"></div>
+        <div id="authErr"></div>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-amber" onclick="authLogin()" style="flex:1;justify-content:center">Entrar</button>
+          <button class="btn btn-ghost" onclick="authRegister()" style="flex:1;justify-content:center">Criar
+            conta</button>
+        </div>
+        <p style="text-align:center;color:var(--muted);font-size:11px;margin-top:20px">Cada restaurante tem sua própria
+          conta e dados isolados</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="shell">
+
+    <aside class="sidebar">
+      <div class="logo">
+        <h1>Cardápio<em>Pro</em></h1>
+        <p>IA Edition · v2.0</p>
+      </div>
+      <button class="nav-btn active" data-p="config">⚙ Configurar</button>
+      <button class="nav-btn" data-p="items">🍽 Cardápio</button>
+      <button class="nav-btn" data-p="images">🖼 Editor de Imagens</button>
+      <button class="nav-btn" data-p="ai">✦ Assistente IA</button>
+      <button class="nav-btn" data-p="social">📱 Redes Sociais</button>
+      <button class="nav-btn" data-p="orders">🔔 Pedidos <span id="ordersBadge"
+          style="display:none;color:var(--rose);margin-left:4px">●</span></button>
+      <button class="nav-btn" data-p="publish">📤 Publicar & QR</button>
+      <button class="nav-btn" onclick="openClientTab()"
+        style="margin-top:12px;border:1px solid rgba(245,158,11,.3);color:var(--amber)">👁 Tela do Cliente</button>
+      <div class="sidebar-footer">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:8px" id="currentUserEmail"></div>
+        <button class="btn btn-ghost" onclick="authLogout()"
+          style="width:100%;justify-content:center;font-size:12px">Sair</button>
+      </div>
+    </aside>
+
+    <div class="content">
+
+      <!-- ===================== CONFIG ===================== -->
+      <section class="panel active" id="config">
+        <div class="page-head">
+          <div class="eyebrow">Configuração</div>
+          <h2>Configure seu <em>restaurante</em></h2>
+          <p>Personalize o cardápio e conecte a inteligência artificial para gerar conteúdo automaticamente.</p>
+        </div>
+
+        <div class="ai-section">
+          <h3><span class="spark">✦</span> Conexão com IA (API Claude)</h3>
+          <p>Cole sua chave da API Anthropic para ativar geração de textos, descrições e legendas. <a
+              href="https://console.anthropic.com/" target="_blank" style="color:var(--amber)">Criar chave grátis →</a>
+          </p>
+          <div class="api-config">
+            <div class="status" id="apiStatus"></div>
+            <input type="password" id="apiKey" placeholder="sk-ant-api03-..." oninput="testApiKey()">
+            <button class="btn btn-amber btn-sm" onclick="testApiKey()">Testar</button>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">Dados do estabelecimento</div>
+            <div class="field"><label>Nome</label><input id="cfgName" placeholder="Cantina do Zé"></div>
+            <div class="field"><label>Slogan</label><input id="cfgTag" placeholder="Comida caseira desde 1985"></div>
+            <div class="field-row">
+              <div class="field"><label>WhatsApp</label><input id="cfgPhone" placeholder="5531999999999"></div>
+              <div class="field"><label>Cor principal</label><input type="color" id="cfgColor" value="#F59E0B"
+                  style="height:44px;cursor:pointer"></div>
+            </div>
+            <div class="field"><label>Tipo de culinária</label>
+              <select id="cfgCuisine">
+                <option>Brasileira</option>
+                <option>Italiana</option>
+                <option>Japonesa</option>
+                <option>Mexicana</option>
+                <option>Árabe</option>
+                <option>Fast Food</option>
+                <option>Vegana</option>
+                <option>Confeitaria</option>
+                <option>Hamburgueria</option>
+                <option>Pizzaria</option>
+                <option>Bar</option>
+                <option>Outro</option>
+              </select>
+            </div>
+            <button class="btn btn-amber" onclick="saveConfig()">Salvar configurações</button>
+          </div>
+          <div class="card">
+            <div class="card-title">Categorias do cardápio</div>
+            <div id="catList"></div>
+            <div style="display:flex;gap:8px;margin-top:14px">
+              <input id="newCat" placeholder="Nova categoria..." style="flex:1">
+              <button class="btn btn-ghost btn-sm" onclick="addCat()">+ Adicionar</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== ITEMS ===================== -->
+      <section class="panel" id="items">
+        <div class="page-head">
+          <div class="eyebrow">Cardápio</div>
+          <h2>Monte seu <em>cardápio</em></h2>
+          <p>Adicione pratos e use a IA para gerar descrições irresistíveis automaticamente.</p>
+        </div>
+
+        <div class="stats-row">
+          <div class="stat">
+            <div class="lbl">Total de itens</div>
+            <div class="val" id="sTotal">0</div>
+          </div>
+          <div class="stat">
+            <div class="lbl">Categorias</div>
+            <div class="val" id="sCats">0</div>
+          </div>
+          <div class="stat">
+            <div class="lbl">Ticket médio</div>
+            <div class="val" id="sAvg">R$0</div>
+          </div>
+          <div class="stat">
+            <div class="lbl">Mais caro</div>
+            <div class="val" id="sMax">R$0</div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">Novo item</div>
+            <div class="field"><label>Nome</label><input id="iName" placeholder="Feijoada Completa"></div>
+            <div class="field">
+              <label>Descrição <button class="btn btn-ai btn-sm" onclick="aiDesc()"
+                  style="float:right;margin-top:-4px">Gerar com IA</button></label>
+              <textarea id="iDesc" placeholder="Feijão preto, arroz branco, couve..."></textarea>
+            </div>
+            <div class="field-row">
+              <div class="field"><label>Categoria</label><select id="iCat"></select></div>
+              <div class="field"><label>Preço (R$)</label><input id="iPrice" type="number" step="0.01"
+                  placeholder="45.90"></div>
+            </div>
+            <div class="field">
+              <label>Foto do prato</label>
+              <input type="file" id="iPhoto" accept="image/*" style="padding:8px">
+            </div>
+            <button class="btn btn-amber" onclick="addItem()" style="width:100%;justify-content:center">+ Adicionar ao
+              cardápio</button>
+          </div>
+          <div class="card">
+            <div class="card-title">Itens cadastrados <small id="itemCount">0 itens</small></div>
+            <input id="itemSearch" placeholder="Buscar..." style="margin-bottom:14px" oninput="renderItems()">
+            <div id="itemList" style="max-height:500px;overflow-y:auto"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== IMAGE EDITOR ===================== -->
+      <section class="panel" id="images">
+        <div class="page-head">
+          <div class="eyebrow">Editor de Imagens</div>
+          <h2>Prepare fotos <em>profissionais</em></h2>
+          <p>Ajuste brilho, contraste, saturação e aplique filtros para deixar as fotos dos pratos irresistíveis nas
+            redes sociais.</p>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">Imagem original</div>
+            <div class="img-editor" id="dropZone">
+              <input type="file" id="editorFile" accept="image/*" style="display:none"
+                onchange="loadEditorImage(event)">
+              <p style="color:var(--muted)">📷 Clique ou arraste uma imagem</p>
+              <button class="btn btn-ghost btn-sm" onclick="document.getElementById('editorFile').click()">Selecionar
+                arquivo</button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Resultado</div>
+            <canvas id="editorCanvas" style="display:none;max-width:100%;border-radius:10px"></canvas>
+            <div id="editorEmpty" class="empty-state">
+              <h4>Carregue uma imagem</h4>
+              <p>O resultado aparecerá aqui</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" id="editorControls" style="display:none">
+          <div class="card-title">Ajustes <button class="btn btn-ghost btn-sm" onclick="resetFilters()">↺
+              Resetar</button></div>
+          <div class="grid-3">
+            <div class="img-slider"><span>☀ Brilho</span><input type="range" id="fBright" min="-100" max="100" value="0"
+                oninput="applyFilters()"><span id="vBright">0</span></div>
+            <div class="img-slider"><span>◐ Contraste</span><input type="range" id="fContrast" min="-100" max="100"
+                value="0" oninput="applyFilters()"><span id="vContrast">0</span></div>
+            <div class="img-slider"><span>🎨 Saturação</span><input type="range" id="fSat" min="-100" max="100"
+                value="0" oninput="applyFilters()"><span id="vSat">0</span></div>
+            <div class="img-slider"><span>🌡 Temperatura</span><input type="range" id="fTemp" min="-50" max="50"
+                value="0" oninput="applyFilters()"><span id="vTemp">0</span></div>
+            <div class="img-slider"><span>🔅 Vinheta</span><input type="range" id="fVig" min="0" max="100" value="0"
+                oninput="applyFilters()"><span id="vVig">0</span></div>
+            <div class="img-slider"><span>🌫 Blur</span><input type="range" id="fBlur" min="0" max="10" value="0"
+                oninput="applyFilters()"><span id="vBlur">0</span></div>
+          </div>
+
+          <div style="margin-top:18px">
+            <label>Filtros predefinidos</label>
+            <div class="ai-chips" style="margin-top:8px">
+              <button class="ai-chip" onclick="applyPreset('food')">🍕 Food Pro</button>
+              <button class="ai-chip" onclick="applyPreset('warm')">🌅 Quente</button>
+              <button class="ai-chip" onclick="applyPreset('bright')">✨ Luminoso</button>
+              <button class="ai-chip" onclick="applyPreset('bw')">⚫ P&B</button>
+              <button class="ai-chip" onclick="applyPreset('vintage')">📷 Vintage</button>
+              <button class="ai-chip" onclick="applyPreset('vivid')">🌈 Vibrante</button>
+            </div>
+          </div>
+
+          <div style="margin-top:18px">
+            <label>Formato de exportação</label>
+            <div class="ai-chips" style="margin-top:8px">
+              <button class="ai-chip active" onclick="setCrop('free')" id="cropFree">Livre</button>
+              <button class="ai-chip" onclick="setCrop('1:1')" id="crop1">1:1 Instagram</button>
+              <button class="ai-chip" onclick="setCrop('4:5')" id="crop45">4:5 Feed</button>
+              <button class="ai-chip" onclick="setCrop('9:16')" id="crop916">9:16 Stories</button>
+            </div>
+          </div>
+
+          <div style="margin-top:18px;display:flex;gap:10px">
+            <button class="btn btn-amber" onclick="downloadEdited()">↓ Baixar imagem editada</button>
+            <button class="btn btn-ghost" onclick="useInMenu()">Usar no cardápio →</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== AI ASSISTANT ===================== -->
+      <section class="panel" id="ai">
+        <div class="page-head">
+          <div class="eyebrow">✦ Assistente IA</div>
+          <h2>IA para seu <em>negócio</em></h2>
+          <p>Gere descrições de pratos, nomes criativos, sugestões de cardápio, textos de marketing e muito mais com
+            inteligência artificial.</p>
+        </div>
+
+        <div class="ai-section">
+          <h3><span class="spark">✦</span> O que deseja gerar?</h3>
+          <div class="ai-chips">
+            <button class="ai-chip active" onclick="setAiMode('desc')" data-mode="desc">Descrições de pratos</button>
+            <button class="ai-chip" onclick="setAiMode('names')" data-mode="names">Nomes criativos</button>
+            <button class="ai-chip" onclick="setAiMode('menu')" data-mode="menu">Sugestão de cardápio</button>
+            <button class="ai-chip" onclick="setAiMode('promo')" data-mode="promo">Texto promocional</button>
+            <button class="ai-chip" onclick="setAiMode('whats')" data-mode="whats">Mensagem WhatsApp</button>
+            <button class="ai-chip" onclick="setAiMode('review')" data-mode="review">Responder avaliação</button>
+          </div>
+
+          <div class="field" id="aiInputField">
+            <label id="aiInputLabel">Descreva o prato</label>
+            <textarea id="aiInput"
+              placeholder="Ex: Feijoada com feijão preto, linguiça, torresmo, couve, laranja e arroz branco"></textarea>
+          </div>
+
+          <button class="btn btn-ai" onclick="runAi()" id="aiRunBtn">Gerar com IA</button>
+
+          <div style="margin-top:18px">
+            <label>Resultado</label>
+            <div class="ai-output" id="aiOutput">O resultado aparecerá aqui...</div>
+          </div>
+          <div style="margin-top:12px;display:flex;gap:8px">
+            <button class="btn btn-ghost btn-sm" onclick="copyAi()">📋 Copiar</button>
+            <button class="btn btn-ghost btn-sm" onclick="runAi()">↻ Gerar outro</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== SOCIAL ===================== -->
+      <section class="panel" id="social">
+        <div class="page-head">
+          <div class="eyebrow">Redes Sociais</div>
+          <h2>Crie posts <em>irresistíveis</em></h2>
+          <p>A IA gera legendas, hashtags e textos otimizados para Instagram, WhatsApp e Facebook.</p>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">Gerador de postagem</div>
+            <div class="field">
+              <label>Plataforma</label>
+              <select id="socialPlatform">
+                <option value="instagram">Instagram (Feed)</option>
+                <option value="stories">Instagram Stories</option>
+                <option value="whatsapp">Status WhatsApp</option>
+                <option value="facebook">Facebook</option>
+                <option value="tiktok">TikTok</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Tipo de post</label>
+              <select id="socialType">
+                <option value="promo">Promoção do dia</option>
+                <option value="new">Novidade no cardápio</option>
+                <option value="story">Bastidores / História</option>
+                <option value="engage">Engajamento / Enquete</option>
+                <option value="fideliza">Fidelização de clientes</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Contexto (opcional)</label>
+              <textarea id="socialCtx"
+                placeholder="Ex: Estamos lançando a nova sobremesa de Natal, tiramisù com panetone..."
+                rows="3"></textarea>
+            </div>
+            <div class="field">
+              <label>Imagem para o post</label>
+              <input type="file" id="socialImg" accept="image/*" style="padding:8px">
+            </div>
+            <button class="btn btn-ai" onclick="genSocial()" style="width:100%;justify-content:center">Gerar legenda com
+              IA</button>
+          </div>
+
+          <div class="card">
+            <div class="card-title">Pré-visualização</div>
+            <div class="social-card" id="socialPreview">
+              <div
+                style="aspect-ratio:1;background:var(--bg3);display:grid;place-items:center;color:var(--muted);font-size:40px"
+                id="socialPreviewImg">📷</div>
+              <div class="social-body">
+                <p id="socialPreviewText" style="color:var(--muted)">A legenda gerada pela IA aparecerá aqui...</p>
+                <div class="hashtags" id="socialPreviewHash"></div>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-ghost btn-sm" onclick="copySocial()">📋 Copiar legenda</button>
+              <button class="btn btn-ghost btn-sm" onclick="downloadSocialImg()">↓ Baixar imagem</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== PEDIDOS ===================== -->
+      <section class="panel" id="orders">
+        <div class="page-head">
+          <div class="eyebrow">Pedidos em tempo real</div>
+          <h2>Painel de <em>pedidos</em></h2>
+          <p>Os pedidos chegam aqui automaticamente quando os clientes finalizam no cardápio digital. Atualizações em
+            tempo real.</p>
+        </div>
+
+        <div class="stats-row" style="margin-bottom:24px">
+          <div class="stat">
+            <div class="lbl">Total recebidos</div>
+            <div class="val" id="ordersCount">0 pedidos</div>
+          </div>
+          <div class="stat">
+            <div class="lbl">Aguardando</div>
+            <div class="val" id="ordersPending" style="color:var(--amber)">0 pendentes</div>
+          </div>
+        </div>
+
+        <div id="ordersList">
+          <div class="empty-state">
+            <h4>Aguardando pedidos</h4>
+            <p>Os pedidos dos clientes aparecerão aqui em tempo real</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== PUBLISH ===================== -->
+      <section class="panel" id="publish">
+        <div class="page-head">
+          <div class="eyebrow">Publicar</div>
+          <h2>Publique e gere o <em>QR Code</em></h2>
+          <p>Hospede os arquivos no GitHub Pages e distribua o QR Code nas mesas.</p>
+        </div>
+
+        <div class="ai-section">
+          <h3><span class="spark">🔗</span> URL do cardápio para os clientes</h3>
+          <p style="line-height:1.8;margin-bottom:14px">Configure a URL base do GitHub Pages para gerar o link correto
+            com o ID do seu restaurante.</p>
+          <div class="field">
+            <label>URL base do GitHub Pages</label>
+            <input id="githubBase" placeholder="https://seuusuario.github.io/meu-cardapio"
+              oninput="updateClientUrlHint()">
+          </div>
+          <div class="url-preview">
+            <div class="url-label">Link do cliente (para o QR Code)</div>
+            <code id="clientUrlPreview">Configure a URL acima</code>
+            <div class="uid-row">ID do restaurante: <code id="currentUserId" style="color:var(--amber)">—</code></div>
+          </div>
+        </div>
+
+        <div class="ai-section" style="margin-top:20px">
+          <h3><span class="spark">📌</span> Como publicar no GitHub Pages</h3>
+          <p style="line-height:1.8">
+            1. Vá em <a href="https://github.com/new" target="_blank" style="color:var(--amber)">github.com/new</a> e
+            crie um repositório público (ex: <strong>meu-cardapio</strong>)<br>
+            2. Faça upload dos arquivos: <strong style="color:var(--amber)">cardapio-digital-pro.html</strong>, <strong
+              style="color:var(--amber)">cliente.html</strong>, <strong
+              style="color:var(--amber)">manifest.json</strong> e <strong style="color:var(--amber)">sw.js</strong><br>
+            3. Em <strong>Settings → Pages → Source</strong>, selecione "main" e salve<br>
+            4. URL ficará: <code style="color:var(--amber)">seuusuario.github.io/meu-cardapio</code> — cole no campo
+            acima<br>
+            5. Gere o QR Code abaixo e coloque nas mesas!
+          </p>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">Cardápio final</div>
+            <div class="preview-frame" id="finalPreview">
+              <div class="preview-header">
+                <h4 id="fpName">Restaurante</h4>
+                <p id="fpTag">Subtítulo</p>
+              </div>
+              <div class="preview-body" id="fpBody">
+                <div class="empty-state">
+                  <h4>Vazio</h4>
+                </div>
+              </div>
+            </div>
+            <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+              <button class="btn btn-amber" onclick="downloadMenu()">↓ Baixar cardápio (HTML)</button>
+              <button class="btn btn-ghost" onclick="exportJson()">↓ Backup JSON</button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">QR Code</div>
+            <div class="field"><label>Link do cardápio publicado</label><input id="menuUrl"
+                placeholder="https://seuusuario.github.io/meu-cardapio"></div>
+            <button class="btn btn-amber" onclick="genQR()" style="width:100%;justify-content:center">Gerar QR
+              Code</button>
+            <div class="qr-zone">
+              <div id="qrcode"></div>
+              <div style="margin-top:14px;display:none" id="qrActions">
+                <button class="btn btn-ghost btn-sm" onclick="dlQR()">↓ Baixar QR</button>
+                <button class="btn btn-ghost btn-sm" onclick="printQR()">🖨 Imprimir cartaz</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <div class="modal-bg" id="editModal">
+    <div class="modal">
+      <h3>Editar item</h3>
+      <input type="hidden" id="editId">
+      <div class="field"><label>Nome</label><input id="eName"></div>
+      <div class="field"><label>Descrição</label><textarea id="eDesc"></textarea></div>
+      <div class="field-row">
+        <div class="field"><label>Categoria</label><select id="eCat"></select></div>
+        <div class="field"><label>Preço</label><input id="ePrice" type="number" step="0.01"></div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+        <button class="btn btn-amber" onclick="saveEdit()">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ============ STATE ============
+    let S = {
+      config: { name: '', tagline: '', phone: '', color: '#F59E0B', cuisine: 'Brasileira' },
+      cats: ['Entradas', 'Pratos Principais', 'Bebidas', 'Sobremesas'],
+      items: [],
+      apiKey: ''
+    };
+    let editorImg = null;
+    let currentCrop = 'free';
+    let currentAiMode = 'desc';
+    let socialImgData = null;
+    let currentUser = null;
+    let db, auth;
+    let orders = [];
+    let ordersUnsub = null;
+    let _saveTimer;
+
+    function save() {
+      clearTimeout(_saveTimer);
+      _saveTimer = setTimeout(async () => {
+        if (!currentUser) return;
+        try {
+          await db.collection('restaurants').doc(currentUser.uid).set({
+            config: S.config,
+            cats: S.cats,
+            items: S.items,
+            apiKey: S.apiKey
+          });
+        } catch (e) { toast('Erro ao salvar no servidor'); }
+      }, 600);
+    }
+    function toast(m) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2500); }
+    function esc(s) { return (s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+    function brl(n) { return 'R$ ' + n.toFixed(2).replace('.', ','); }
+
+    // ============ NAV ============
+    document.querySelectorAll('.nav-btn').forEach(b => {
+      b.onclick = () => {
+        document.querySelectorAll('.nav-btn').forEach(x => x.classList.remove('active'));
+        document.querySelectorAll('.panel').forEach(x => x.classList.remove('active'));
+        b.classList.add('active');
+        document.getElementById(b.dataset.p).classList.add('active');
+        renderAll();
+      };
+    });
+
+    // ============ API KEY ============
+    function testApiKey() {
+      const key = document.getElementById('apiKey').value.trim();
+      S.apiKey = key;
+      save();
+      const dot = document.getElementById('apiStatus');
+      if (key && key.startsWith('sk-')) {
+        dot.classList.add('ok');
+        toast('API conectada ✓');
+      } else {
+        dot.classList.remove('ok');
+      }
+    }
+
+    async function callAI(prompt, maxTokens = 1024) {
+      if (!S.apiKey) { toast('Configure sua API key primeiro'); return null; }
+      try {
+        const r = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-api-key': S.apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: maxTokens,
+            messages: [{ role: 'user', content: prompt }]
+          })
+        });
+        const d = await r.json();
+        if (d.content && d.content[0]) return d.content[0].text;
+        if (d.error) { toast('Erro: ' + d.error.message); return null; }
+        return null;
+      } catch (e) { toast('Erro de conexão'); return null; }
+    }
+
+    // ============ CONFIG ============
+    function loadConfig() {
+      document.getElementById('cfgName').value = S.config.name;
+      document.getElementById('cfgTag').value = S.config.tagline;
+      document.getElementById('cfgPhone').value = S.config.phone;
+      document.getElementById('cfgColor').value = S.config.color;
+      document.getElementById('cfgCuisine').value = S.config.cuisine || 'Brasileira';
+      if (S.apiKey) { document.getElementById('apiKey').value = S.apiKey; testApiKey(); }
+    }
+    function saveConfig() {
+      S.config = {
+        name: document.getElementById('cfgName').value || 'Restaurante',
+        tagline: document.getElementById('cfgTag').value,
+        phone: document.getElementById('cfgPhone').value.replace(/\D/g, ''),
+        color: document.getElementById('cfgColor').value,
+        cuisine: document.getElementById('cfgCuisine').value
+      };
+      save(); renderAll(); toast('Configurações salvas ✓');
+    }
+
+    // ============ CATEGORIES ============
+    function renderCats() {
+      const box = document.getElementById('catList');
+      box.innerHTML = S.cats.map((c, i) => `
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
+      <span style="flex:1;font-size:14px">${esc(c)}</span>
+      <button class="icon-btn" onclick="delCat(${i})" style="font-size:11px">×</button>
+    </div>
+  `).join('');
+      // update selects
+      document.querySelectorAll('#iCat,#eCat').forEach(sel => {
+        sel.innerHTML = S.cats.map(c => `<option>${c}</option>`).join('');
+      });
+    }
+    function addCat() {
+      const v = document.getElementById('newCat').value.trim();
+      if (!v) return;
+      S.cats.push(v);
+      document.getElementById('newCat').value = '';
+      save(); renderCats();
+    }
+    function delCat(i) { S.cats.splice(i, 1); save(); renderCats(); }
+
+    // ============ ITEMS ============
+    function addItem() {
+      const name = document.getElementById('iName').value.trim();
+      const desc = document.getElementById('iDesc').value.trim();
+      const cat = document.getElementById('iCat').value;
+      const price = parseFloat(document.getElementById('iPrice').value);
+      if (!name || !price) { toast('Preencha nome e preço'); return; }
+
+      const photoInput = document.getElementById('iPhoto');
+      const item = { id: Date.now(), name, desc, cat, price, img: null };
+
+      if (photoInput.files[0]) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          // Resize to 400px
+          const img = new Image();
+          img.onload = () => {
+            const c = document.createElement('canvas');
+            const max = 400;
+            let w = img.width, h = img.height;
+            if (w > h) { h = h * (max / w); w = max } else { w = w * (max / h); h = max }
+            c.width = w; c.height = h;
+            c.getContext('2d').drawImage(img, 0, 0, w, h);
+            item.img = c.toDataURL('image/jpeg', 0.8);
+            S.items.push(item);
+            save(); clearItemForm(); renderAll(); toast('Item adicionado ✓');
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(photoInput.files[0]);
+      } else {
+        S.items.push(item);
+        save(); clearItemForm(); renderAll(); toast('Item adicionado ✓');
+      }
+    }
+    function clearItemForm() {
+      ['iName', 'iDesc', 'iPrice'].forEach(i => document.getElementById(i).value = '');
+      document.getElementById('iPhoto').value = '';
+    }
+    function delItem(id) { S.items = S.items.filter(i => i.id !== id); save(); renderAll(); toast('Item removido'); }
+    function editItem(id) {
+      const item = S.items.find(i => i.id === id);
+      document.getElementById('editId').value = id;
+      document.getElementById('eName').value = item.name;
+      document.getElementById('eDesc').value = item.desc;
+      document.getElementById('eCat').value = item.cat;
+      document.getElementById('ePrice').value = item.price;
+      document.getElementById('editModal').classList.add('show');
+    }
+    function saveEdit() {
+      const id = +document.getElementById('editId').value;
+      const item = S.items.find(i => i.id === id);
+      item.name = document.getElementById('eName').value;
+      item.desc = document.getElementById('eDesc').value;
+      item.cat = document.getElementById('eCat').value;
+      item.price = parseFloat(document.getElementById('ePrice').value);
+      save(); closeModal(); renderAll(); toast('Item atualizado ✓');
+    }
+    function closeModal() { document.querySelectorAll('.modal-bg').forEach(m => m.classList.remove('show')); }
+
+    function renderItems() {
+      const q = (document.getElementById('itemSearch')?.value || '').toLowerCase();
+      let list = S.items;
+      if (q) list = list.filter(i => i.name.toLowerCase().includes(q) || i.cat.toLowerCase().includes(q));
+      const box = document.getElementById('itemList');
+      document.getElementById('itemCount').textContent = S.items.length + ' itens';
+
+      if (list.length === 0) { box.innerHTML = '<div class="empty-state"><h4>Nenhum item</h4><p>Adicione o primeiro prato</p></div>'; return; }
+      box.innerHTML = list.map(i => `
+    <div class="menu-item">
+      ${i.img ? `<img src="${i.img}" alt="${esc(i.name)}">` : '<div class="placeholder-img">🍽</div>'}
+      <div class="info">
+        <h4>${esc(i.name)}</h4>
+        ${i.desc ? `<p>${esc(i.desc)}</p>` : ''}
+        <div class="cat-tag">${i.cat}</div>
+      </div>
+      <div class="price">${brl(i.price)}</div>
+      <div class="actions">
+        <button class="icon-btn" onclick="editItem(${i.id})" title="Editar">✎</button>
+        <button class="icon-btn" onclick="delItem(${i.id})" title="Excluir" style="color:var(--rose)">×</button>
+      </div>
+    </div>
+  `).join('');
+    }
+    function renderStats() {
+      document.getElementById('sTotal').textContent = S.items.length;
+      document.getElementById('sCats').textContent = new Set(S.items.map(i => i.cat)).size;
+      const t = S.items.reduce((s, i) => s + i.price, 0);
+      document.getElementById('sAvg').textContent = S.items.length ? brl(t / S.items.length) : 'R$0';
+      document.getElementById('sMax').textContent = S.items.length ? brl(Math.max(...S.items.map(i => i.price))) : 'R$0';
+    }
+
+    // ============ AI DESC ============
+    async function aiDesc() {
+      const name = document.getElementById('iName').value.trim();
+      if (!name) { toast('Digite o nome do prato primeiro'); return; }
+      const out = document.getElementById('iDesc');
+      out.value = 'Gerando descrição com IA...';
+      const result = await callAI(`Você é redator de cardápio de restaurante ${S.config.cuisine || 'brasileiro'}. Crie uma descrição curta, sensorial e apetitosa (máximo 2 linhas) para o prato "${name}". Seja criativo e use linguagem que desperte desejo. Responda APENAS com a descrição, sem aspas.`);
+      out.value = result || 'Erro ao gerar. Verifique a API key.';
+    }
+
+    // ============ IMAGE EDITOR ============
+    const dropZone = document.getElementById('dropZone');
+    dropZone.addEventListener('click', () => document.getElementById('editorFile').click());
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.style.borderColor = 'var(--amber)' });
+    dropZone.addEventListener('dragleave', () => { dropZone.style.borderColor = '' });
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault(); dropZone.style.borderColor = '';
+      if (e.dataTransfer.files[0]) loadEditorImageFile(e.dataTransfer.files[0]);
+    });
+
+    function loadEditorImage(e) { if (e.target.files[0]) loadEditorImageFile(e.target.files[0]); }
+    function loadEditorImageFile(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          editorImg = img;
+          dropZone.classList.add('has-img');
+          dropZone.innerHTML = `<img src="${e.target.result}" style="max-width:100%;max-height:300px;border-radius:10px">`;
+          document.getElementById('editorCanvas').style.display = 'block';
+          document.getElementById('editorEmpty').style.display = 'none';
+          document.getElementById('editorControls').style.display = 'block';
+          resetFilters();
+          applyFilters();
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function applyFilters() {
+      if (!editorImg) return;
+      const canvas = document.getElementById('editorCanvas');
+      const ctx = canvas.getContext('2d');
+      let w = editorImg.width, h = editorImg.height;
+
+      // Apply crop ratio
+      if (currentCrop === '1:1') { const s = Math.min(w, h); w = s; h = s }
+      else if (currentCrop === '4:5') { if (w / h > 4 / 5) { w = h * (4 / 5) } else { h = w * (5 / 4) } }
+      else if (currentCrop === '9:16') { if (w / h > 9 / 16) { w = h * (9 / 16) } else { h = w * (16 / 9) } }
+
+      const maxW = 800;
+      if (w > maxW) { const ratio = maxW / w; w *= ratio; h *= ratio }
+      canvas.width = w; canvas.height = h;
+
+      // Draw image centered
+      const sx = (editorImg.width - w * (editorImg.width / canvas.width)) / 2;
+      const sy = (editorImg.height - h * (editorImg.height / canvas.height)) / 2;
+
+      const bright = +document.getElementById('fBright').value;
+      const contrast = +document.getElementById('fContrast').value;
+      const sat = +document.getElementById('fSat').value;
+      const blur = +document.getElementById('fBlur').value;
+
+      document.getElementById('vBright').textContent = bright;
+      document.getElementById('vContrast').textContent = contrast;
+      document.getElementById('vSat').textContent = sat;
+      document.getElementById('vTemp').textContent = document.getElementById('fTemp').value;
+      document.getElementById('vVig').textContent = document.getElementById('fVig').value;
+      document.getElementById('vBlur').textContent = blur;
+
+      ctx.filter = `brightness(${100 + bright}%) contrast(${100 + contrast}%) saturate(${100 + sat}%) blur(${blur}px)`;
+      ctx.drawImage(editorImg, 0, 0, w, h);
+      ctx.filter = 'none';
+
+      // Temperature
+      const temp = +document.getElementById('fTemp').value;
+      if (temp !== 0) {
+        ctx.globalCompositeOperation = 'overlay';
+        ctx.fillStyle = temp > 0 ? `rgba(255,${180 - temp * 2},0,${Math.abs(temp) / 200})` : `rgba(0,${100 + Math.abs(temp)},255,${Math.abs(temp) / 200})`;
+        ctx.fillRect(0, 0, w, h);
+        ctx.globalCompositeOperation = 'source-over';
+      }
+
+      // Vignette
+      const vig = +document.getElementById('fVig').value;
+      if (vig > 0) {
+        const grd = ctx.createRadialGradient(w / 2, h / 2, w * 0.3, w / 2, h / 2, w * 0.8);
+        grd.addColorStop(0, 'transparent');
+        grd.addColorStop(1, `rgba(0,0,0,${vig / 100})`);
+        ctx.fillStyle = grd;
+        ctx.fillRect(0, 0, w, h);
+      }
+    }
+
+    function resetFilters() {
+      ['fBright', 'fContrast', 'fSat', 'fTemp', 'fVig', 'fBlur'].forEach(id => {
+        document.getElementById(id).value = 0;
+      });
+      currentCrop = 'free';
+      document.querySelectorAll('[id^=crop]').forEach(c => c.classList.remove('active'));
+      document.getElementById('cropFree').classList.add('active');
+      applyFilters();
+    }
+
+    function applyPreset(p) {
+      resetFilters();
+      const presets = {
+        food: { fBright: 10, fContrast: 15, fSat: 25, fTemp: 15, fVig: 20 },
+        warm: { fBright: 5, fContrast: 10, fSat: 10, fTemp: 35, fVig: 15 },
+        bright: { fBright: 30, fContrast: 5, fSat: 15, fTemp: 5, fVig: 0 },
+        bw: { fBright: 10, fContrast: 20, fSat: -100, fTemp: 0, fVig: 30 },
+        vintage: { fBright: -5, fContrast: 15, fSat: -20, fTemp: 20, fVig: 40 },
+        vivid: { fBright: 10, fContrast: 30, fSat: 50, fTemp: 0, fVig: 10 },
+      };
+      const pr = presets[p];
+      Object.entries(pr).forEach(([k, v]) => document.getElementById(k).value = v);
+      applyFilters();
+      toast('Filtro ' + p + ' aplicado');
+    }
+
+    function setCrop(ratio) {
+      currentCrop = ratio;
+      document.querySelectorAll('[id^=crop]').forEach(c => c.classList.remove('active'));
+      const map = { free: 'cropFree', '1:1': 'crop1', '4:5': 'crop45', '9:16': 'crop916' };
+      document.getElementById(map[ratio]).classList.add('active');
+      applyFilters();
+    }
+
+    function downloadEdited() {
+      const canvas = document.getElementById('editorCanvas');
+      const a = document.createElement('a');
+      a.href = canvas.toDataURL('image/jpeg', 0.92);
+      a.download = 'foto-editada.jpg';
+      a.click();
+      toast('Imagem baixada ✓');
+    }
+
+    function useInMenu() {
+      const canvas = document.getElementById('editorCanvas');
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+      // Store temporarily for next item
+      window._pendingImg = dataUrl;
+      toast('Imagem pronta! Adicione um item no Cardápio para usá-la.');
+    }
+
+    // ============ AI ASSISTANT ============
+    function setAiMode(mode) {
+      currentAiMode = mode;
+      document.querySelectorAll('.ai-chip[data-mode]').forEach(c => c.classList.remove('active'));
+      document.querySelector(`.ai-chip[data-mode="${mode}"]`).classList.add('active');
+      const labels = {
+        desc: 'Descreva o prato (nome e ingredientes)',
+        names: 'Descreva o tipo de prato para dar nomes criativos',
+        menu: 'Descreva o estilo do restaurante e público-alvo',
+        promo: 'Descreva a promoção ou evento',
+        whats: 'Descreva a mensagem que quer enviar',
+        review: 'Cole a avaliação do cliente para responder',
+      };
+      document.getElementById('aiInputLabel').textContent = labels[mode] || 'Descreva';
+    }
+
+    async function runAi() {
+      const input = document.getElementById('aiInput').value.trim();
+      if (!input) { toast('Descreva o que deseja gerar'); return; }
+      const out = document.getElementById('aiOutput');
+      out.textContent = '✦ Gerando com IA...';
+      out.classList.add('loading');
+
+      const cuisine = S.config.cuisine || 'brasileira';
+      const name = S.config.name || 'restaurante';
+      const prompts = {
+        desc: `Você é redator de cardápio de um restaurante de comida ${cuisine} chamado "${name}". Crie uma descrição curta e sensorial (2-3 linhas) para o seguinte prato: "${input}". Responda apenas com a descrição.`,
+        names: `Você é consultor de gastronomia. Crie 8 nomes criativos e atraentes para o seguinte tipo de prato/produto: "${input}". O restaurante é de comida ${cuisine}. Responda com lista numerada sem explicação.`,
+        menu: `Você é consultor gastronômico. Com base nesse perfil de restaurante: "${input}". Sugira um cardápio completo com entradas, pratos principais, bebidas e sobremesas (5-6 itens cada), com preços sugeridos em reais. Formato: Nome — breve descrição — R$ preço.`,
+        promo: `Você é copywriter de marketing para restaurante ${cuisine} chamado "${name}". Crie um texto promocional curto e persuasivo (3-5 linhas) para WhatsApp/redes sociais sobre: "${input}". Use emojis com moderação. Responda apenas com o texto.`,
+        whats: `Você é gerente do restaurante "${name}". Crie uma mensagem profissional e simpática para WhatsApp sobre: "${input}". Seja direto, use 2-4 linhas e emojis com moderação.`,
+        review: `Você é gerente do restaurante "${name}". Um cliente deixou esta avaliação: "${input}". Crie uma resposta profissional, empática e positiva. Se negativa, peça desculpas e convide o cliente a voltar. 3-5 linhas.`,
+      };
+
+      const result = await callAI(prompts[currentAiMode] || prompts.desc);
+      out.classList.remove('loading');
+      out.textContent = result || 'Erro. Verifique a API key.';
+    }
+
+    function copyAi() {
+      const text = document.getElementById('aiOutput').textContent;
+      navigator.clipboard.writeText(text).then(() => toast('Copiado ✓'));
+    }
+
+    // ============ SOCIAL ============
+    document.getElementById('socialImg').addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        socialImgData = ev.target.result;
+        document.getElementById('socialPreviewImg').innerHTML = `<img src="${socialImgData}" class="social-img">`;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    async function genSocial() {
+      const platform = document.getElementById('socialPlatform').value;
+      const type = document.getElementById('socialType').value;
+      const ctx = document.getElementById('socialCtx').value;
+      const name = S.config.name || 'restaurante';
+      const cuisine = S.config.cuisine || 'brasileira';
+
+      const platNames = { instagram: 'Instagram Feed', stories: 'Instagram Stories', whatsapp: 'Status WhatsApp', facebook: 'Facebook', tiktok: 'TikTok' };
+      const typeNames = { promo: 'promoção', new: 'novidade no cardápio', story: 'bastidores/história', engage: 'engajamento/enquete', fideliza: 'fidelização' };
+
+      const textEl = document.getElementById('socialPreviewText');
+      const hashEl = document.getElementById('socialPreviewHash');
+      textEl.textContent = '✦ Gerando legenda...';
+      hashEl.textContent = '';
+
+      const prompt = `Você é social media de um restaurante de comida ${cuisine} chamado "${name}". Crie uma legenda para ${platNames[platform]} do tipo ${typeNames[type]}.
+${ctx ? 'Contexto: ' + ctx : ''}
+
+Regras:
+- Linguagem natural e envolvente para ${platNames[platform]}
+- Use emojis adequados
+- ${platform === 'stories' ? 'Texto curtíssimo (1-2 linhas)' : 'Texto de 3-6 linhas'}
+- Inclua um CTA (chamada para ação)
+- No final, sugira 8-12 hashtags relevantes separadas do texto
+
+Formato:
+LEGENDA:
+[texto aqui]
+
+HASHTAGS:
+[hashtags aqui]`;
+
+      const result = await callAI(prompt);
+      if (!result) { textEl.textContent = 'Erro. Verifique a API key.'; return; }
+
+      const parts = result.split(/HASHTAGS?:/i);
+      const legendaPart = (parts[0] || '').replace(/^LEGENDA:\s*/i, '').trim();
+      const hashPart = (parts[1] || '').trim();
+
+      textEl.textContent = legendaPart;
+      hashEl.textContent = hashPart;
+    }
+
+    function copySocial() {
+      const text = document.getElementById('socialPreviewText').textContent;
+      const hash = document.getElementById('socialPreviewHash').textContent;
+      navigator.clipboard.writeText(text + '\n\n' + hash).then(() => toast('Legenda copiada ✓'));
+    }
+
+    function downloadSocialImg() {
+      if (!socialImgData) { toast('Adicione uma imagem primeiro'); return; }
+      const a = document.createElement('a');
+      a.href = socialImgData;
+      a.download = 'post-social.jpg';
+      a.click();
+    }
+
+    // ============ PUBLISH ============
+    function renderPreview() {
+      document.getElementById('fpName').textContent = S.config.name || 'Restaurante';
+      document.getElementById('fpTag').textContent = S.config.tagline || '';
+      const body = document.getElementById('fpBody');
+      if (!S.items.length) { body.innerHTML = '<div class="empty-state"><h4>Sem itens</h4></div>'; return; }
+      const grouped = {};
+      S.items.forEach(i => { grouped[i.cat] = grouped[i.cat] || []; grouped[i.cat].push(i) });
+      body.innerHTML = Object.entries(grouped).map(([cat, items]) => `
+    <div class="preview-cat" style="color:${S.config.color}">${cat}</div>
+    ${items.map(i => `<div class="preview-item">
+      ${i.img ? `<img src="${i.img}">` : ''}
+      <div class="txt"><strong>${esc(i.name)}</strong>${i.desc ? `<p>${esc(i.desc)}</p>` : ''}</div>
+      <div class="price" style="color:${S.config.color}">${brl(i.price)}</div>
+    </div>`).join('')}
+  `).join('');
+    }
+
+    function downloadMenu() {
+      if (!S.items.length) { toast('Adicione itens primeiro'); return; }
+      const c = S.config;
+      const grouped = {};
+      S.items.forEach(i => { grouped[i.cat] = grouped[i.cat] || []; grouped[i.cat].push(i) });
+      const phone = c.phone.replace(/\D/g, '');
+      const wa = phone ? `https://wa.me/${phone}?text=${encodeURIComponent('Olá! Gostaria de fazer um pedido.')}` : '';
+
+      const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${esc(c.name)} · Cardápio</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,800;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Outfit',sans-serif;background:#FAF7F0;color:#1A1714;min-height:100vh}
+.wrap{max-width:640px;margin:0 auto;background:#FFFCF5;min-height:100vh;box-shadow:0 0 60px rgba(0,0,0,.06)}
+header{padding:48px 28px 32px;text-align:center;background:linear-gradient(180deg,#FFFCF5,#FAF7F0);border-bottom:3px solid ${c.color}}
+header h1{font-family:'Playfair Display';font-size:38px;font-weight:800;letter-spacing:-1.5px;line-height:1}
+header p{margin-top:8px;color:#9C8E80;font-size:11px;text-transform:uppercase;letter-spacing:3px}
+.body{padding:24px 28px}
+.cat{font-family:'Playfair Display';font-style:italic;font-size:14px;color:${c.color};text-transform:uppercase;letter-spacing:3px;margin:28px 0 12px;display:flex;align-items:center;gap:12px}
+.cat:first-child{margin-top:0}
+.cat::after{content:'';flex:1;height:1px;background:rgba(26,23,20,.12)}
+.item{display:flex;gap:14px;padding:16px 0;border-bottom:1px dashed rgba(26,23,20,.12);align-items:center}
+.item:last-child{border:none}
+.item img{width:60px;height:60px;border-radius:10px;object-fit:cover;flex-shrink:0}
+.item .txt{flex:1}
+.item .txt strong{font-family:'Playfair Display';font-size:17px;font-weight:600;display:block;margin-bottom:3px}
+.item .txt p{font-size:12px;color:#9C8E80;line-height:1.5}
+.item .price{font-family:'Playfair Display';font-size:18px;font-weight:600;color:${c.color};white-space:nowrap}
+.cta{padding:28px;text-align:center;background:#1A1714;color:#FAF7F0}
+.cta p{color:#9C8E80;font-size:12px;text-transform:uppercase;letter-spacing:2px}
+.cta a{display:inline-flex;align-items:center;gap:10px;background:${c.color};color:#1A1714;padding:15px 28px;border-radius:50px;text-decoration:none;font-weight:700;font-size:15px;margin-top:12px}
+footer{padding:20px;text-align:center;font-size:10px;color:#9C8E80;letter-spacing:1px}
+</style></head><body>
+<div class="wrap">
+<header><h1>${esc(c.name)}</h1>${c.tagline ? `<p>${esc(c.tagline)}</p>` : ''}</header>
+<div class="body">
+${Object.entries(grouped).map(([cat, items]) => `
+<div class="cat">${cat}</div>
+${items.map(i => `<div class="item">
+${i.img ? `<img src="${i.img}" alt="${esc(i.name)}">` : ''}
+<div class="txt"><strong>${esc(i.name)}</strong>${i.desc ? `<p>${esc(i.desc)}</p>` : ''}</div>
+<div class="price">${brl(i.price)}</div>
+</div>`).join('')}
+`).join('')}
+</div>
+${wa ? `<div class="cta"><p>Faça seu pedido</p><a href="${wa}" target="_blank">📱 Pedir pelo WhatsApp</a></div>` : ''}
+<footer>Cardápio digital · ${esc(c.name)}</footer>
+</div></body></html>`;
+
+      const blob = new Blob([html], { type: 'text/html' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'index.html';
+      a.click();
+      toast('Cardápio baixado como index.html ✓');
+    }
+
+    function exportJson() {
+      const blob = new Blob([JSON.stringify(S, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'cardapio-backup.json';
+      a.click();
+      toast('Backup baixado ✓');
+    }
+
+    // ============ QR ============
+    function genQR() {
+      const url = document.getElementById('menuUrl').value.trim();
+      if (!url) { toast('Cole o link'); return }
+      document.getElementById('qrcode').innerHTML = '';
+      new QRCode(document.getElementById('qrcode'), { text: url, width: 220, height: 220, colorDark: '#1A1714', colorLight: '#fff', correctLevel: QRCode.CorrectLevel.H });
+      document.getElementById('qrActions').style.display = 'flex';
+      toast('QR Code gerado ✓');
+    }
+    function dlQR() {
+      const img = document.querySelector('#qrcode img') || document.querySelector('#qrcode canvas');
+      if (!img) return;
+      const a = document.createElement('a'); a.href = img.src || img.toDataURL(); a.download = 'qrcode.png'; a.click();
+    }
+    function printQR() {
+      const img = document.querySelector('#qrcode img') || document.querySelector('#qrcode canvas');
+      if (!img) return;
+      const src = img.src || img.toDataURL();
+      const w = window.open('');
+      w.document.write(`<html><head><style>body{font-family:Georgia;text-align:center;padding:60px;background:#FAF7F0}h1{font-size:42px}h2{font-size:18px;color:#666;font-weight:normal;letter-spacing:3px;text-transform:uppercase;margin:10px 0 40px}img{width:300px;border:12px solid white;box-shadow:0 10px 40px rgba(0,0,0,.1);border-radius:12px}p{margin-top:30px;font-size:15px;letter-spacing:2px;text-transform:uppercase;color:#888}</style></head><body><h1>${S.config.name}</h1><h2>Cardápio Digital</h2><img src="${src}"><p>Aponte a câmera do celular</p></body></html>`);
+      w.document.close(); setTimeout(() => w.print(), 500);
+    }
+
+    // ============ RENDER ============
+    function renderAll() {
+      loadConfig(); renderCats(); renderItems(); renderStats(); renderPreview();
+    }
+
+    // ============ FIREBASE CONFIG ============
+    // Import the functions you need from the SDKs you need
+    import { initializeApp } from "firebase/app";
+    import { getAnalytics } from "firebase/analytics";
+    // TODO: Add SDKs for Firebase products that you want to use
+    // https://firebase.google.com/docs/web/setup#available-libraries
+
+    // Your web app's Firebase configuration
+    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+    const firebaseConfig = {
+      apiKey: "AIzaSyAVRy4_Q5Iu6EIb938JG998JbiNhai2O1I",
+      authDomain: "meu-cardapio-efd9c.firebaseapp.com",
+      projectId: "meu-cardapio-efd9c",
+      storageBucket: "meu-cardapio-efd9c.firebasestorage.app",
+      messagingSenderId: "831150539655",
+      appId: "1:831150539655:web:964a596d894ce423630922",
+      measurementId: "G-75JTX4J0V3"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    const firebaseConfig = {
+      apiKey: "COLE_SUA_API_KEY",
+      authDomain: "SEU_PROJETO.firebaseapp.com",
+      projectId: "SEU_ID_DO_PROJETO",
+      storageBucket: "SEU_PROJETO.appspot.com",
+      messagingSenderId: "000000000000",
+      appId: "1:000000000000:web:000000000000000000"
+    };
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+    auth = firebase.auth();
+
+    // ============ FIRESTORE ============
+    async function loadFromFirestore() {
+      const doc = await db.collection('restaurants').doc(currentUser.uid).get();
+      if (doc.exists) {
+        const d = doc.data();
+        if (d.config) S.config = d.config;
+        if (d.cats && d.cats.length) S.cats = d.cats;
+        if (d.items) S.items = d.items;
+        if (d.apiKey) S.apiKey = d.apiKey;
+      }
+    }
+
+    function listenOrders() {
+      if (ordersUnsub) { ordersUnsub(); ordersUnsub = null; }
+      ordersUnsub = db.collection('restaurants').doc(currentUser.uid)
+        .collection('orders')
+        .orderBy('createdAt', 'desc')
+        .limit(100)
+        .onSnapshot(snap => {
+          const hadOrders = orders.length > 0;
+          orders = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+          renderOrders();
+          const newAdded = snap.docChanges().filter(c => c.type === 'added');
+          if (hadOrders && newAdded.length > 0) {
+            toast('🔔 Novo pedido recebido!');
+            const badge = document.getElementById('ordersBadge');
+            if (badge) badge.style.display = 'inline';
+          }
+        }, err => console.warn('Orders listener error:', err.message));
+    }
+
+    // ============ ORDERS ============
+    function renderOrders() {
+      const box = document.getElementById('ordersList');
+      if (!box) return;
+      const pending = orders.filter(o => !o.status || o.status === 'pending').length;
+      const countEl = document.getElementById('ordersCount');
+      const pendEl = document.getElementById('ordersPending');
+      if (countEl) countEl.textContent = orders.length + ' pedidos';
+      if (pendEl) pendEl.textContent = pending + ' pendentes';
+      if (pending === 0) { const badge = document.getElementById('ordersBadge'); if (badge) badge.style.display = 'none'; }
+
+      if (!orders.length) {
+        box.innerHTML = '<div class="empty-state"><h4>Aguardando pedidos</h4><p>Os pedidos dos clientes aparecerão aqui em tempo real</p></div>';
+        return;
+      }
+      const statusLabel = { pending: 'Pendente', preparing: 'Preparando', ready: 'Pronto ✓', served: 'Entregue' };
+      const statusClass = { pending: 's-pending', preparing: 's-preparing', ready: 's-ready', served: 's-served' };
+
+      box.innerHTML = orders.map(o => `
+    <div class="order-card ${(!o.status || o.status === 'pending') ? 'order-new' : ''}">
+      <div class="order-head">
+        <strong>#${o.num}</strong>
+        <span>${esc(o.mesa || '')}</span>
+        <span style="color:var(--muted);font-size:12px">${o.data || ''} ${o.hora || ''}</span>
+        <span class="order-badge ${statusClass[o.status] || statusClass.pending}">${statusLabel[o.status] || 'Pendente'}</span>
+      </div>
+      <div class="order-items">${(o.items || []).map(i => `${i.qty}× ${esc(i.name)}`).join(' · ')}</div>
+      ${o.obs ? `<div class="order-obs">📝 ${esc(o.obs)}</div>` : ''}
+      <div class="order-foot">
+        <strong class="order-total">${brl(o.total || 0)}</strong>
+        <div class="order-actions">
+          ${(!o.status || o.status === 'pending') ? `<button class="btn btn-sm btn-amber" onclick="setOrderStatus('${o.id}','preparing')">Aceitar</button>` : ''}
+          ${o.status === 'preparing' ? `<button class="btn btn-sm btn-amber" onclick="setOrderStatus('${o.id}','ready')">Pronto ✓</button>` : ''}
+          ${o.status === 'ready' ? `<button class="btn btn-sm btn-ghost" onclick="setOrderStatus('${o.id}','served')">Entregue</button>` : ''}
+          <button class="btn btn-sm btn-ghost" onclick="delOrder('${o.id}')" style="color:var(--rose)">×</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+    }
+
+    async function setOrderStatus(orderId, status) {
+      if (!currentUser) return;
+      await db.collection('restaurants').doc(currentUser.uid)
+        .collection('orders').doc(orderId).update({ status });
+    }
+
+    async function delOrder(orderId) {
+      if (!currentUser) return;
+      if (!confirm('Remover este pedido?')) return;
+      await db.collection('restaurants').doc(currentUser.uid)
+        .collection('orders').doc(orderId).delete();
+    }
+
+    // ============ AUTH ============
+    async function authLogin() {
+      const email = document.getElementById('authEmail').value.trim();
+      const pass = document.getElementById('authPass').value;
+      const errEl = document.getElementById('authErr');
+      errEl.textContent = '';
+      if (!email || !pass) { errEl.textContent = 'Preencha e-mail e senha'; return; }
+      try {
+        await auth.signInWithEmailAndPassword(email, pass);
+      } catch (e) { errEl.textContent = traduzErroAuth(e.code); }
+    }
+
+    async function authRegister() {
+      const email = document.getElementById('authEmail').value.trim();
+      const pass = document.getElementById('authPass').value;
+      const errEl = document.getElementById('authErr');
+      errEl.textContent = '';
+      if (!email) { errEl.textContent = 'Digite seu e-mail'; return; }
+      if (pass.length < 6) { errEl.textContent = 'Senha deve ter no mínimo 6 caracteres'; return; }
+      try {
+        await auth.createUserWithEmailAndPassword(email, pass);
+        toast('Conta criada com sucesso! ✓');
+      } catch (e) { errEl.textContent = traduzErroAuth(e.code); }
+    }
+
+    async function authLogout() {
+      if (ordersUnsub) { ordersUnsub(); ordersUnsub = null; }
+      await auth.signOut();
+      toast('Sessão encerrada');
+    }
+
+    function traduzErroAuth(code) {
+      const m = {
+        'auth/user-not-found': 'E-mail não encontrado',
+        'auth/wrong-password': 'Senha incorreta',
+        'auth/email-already-in-use': 'E-mail já cadastrado — faça login',
+        'auth/invalid-email': 'E-mail inválido',
+        'auth/weak-password': 'Senha muito fraca (mín. 6 caracteres)',
+        'auth/invalid-credential': 'E-mail ou senha incorretos',
+        'auth/too-many-requests': 'Muitas tentativas. Aguarde e tente novamente.'
+      };
+      return m[code] || ('Erro: ' + code);
+    }
+
+    function openClientTab() {
+      if (!currentUser) { toast('Faça login primeiro'); return; }
+      const base = (document.getElementById('githubBase')?.value || '').trim();
+      const url = base
+        ? base.replace(/\/$/, '') + '/cliente.html?r=' + currentUser.uid
+        : 'cliente.html?r=' + currentUser.uid;
+      window.open(url, '_blank');
+    }
+
+    function updateClientUrlHint() {
+      if (!currentUser) return;
+      const uid = currentUser.uid;
+      const base = (document.getElementById('githubBase')?.value || '').trim().replace(/\/$/, '');
+      const url = base
+        ? base + '/cliente.html?r=' + uid
+        : '(configure a URL do GitHub Pages acima)/cliente.html?r=' + uid;
+      const previewEl = document.getElementById('clientUrlPreview');
+      if (previewEl) previewEl.textContent = url;
+      const menuUrlEl = document.getElementById('menuUrl');
+      if (menuUrlEl && base) menuUrlEl.value = url;
+    }
+
+    auth.onAuthStateChanged(async user => {
+      if (user) {
+        currentUser = user;
+        document.getElementById('authWall').style.display = 'none';
+        await loadFromFirestore();
+        renderAll();
+        listenOrders();
+        const emailEl = document.getElementById('currentUserEmail');
+        if (emailEl) emailEl.textContent = user.email;
+        const uidEl = document.getElementById('currentUserId');
+        if (uidEl) uidEl.textContent = user.uid;
+        updateClientUrlHint();
+      } else {
+        currentUser = null;
+        document.getElementById('authWall').style.display = 'flex';
+        if (ordersUnsub) { ordersUnsub(); ordersUnsub = null; }
+      }
+    });
+  </script>
+</body>
+
+</html>

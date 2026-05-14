@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cardápio Digital</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,800;1,400&family=Outfit:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+  <style>
+    :root {
+      --accent: #F59E0B;
+      --bg: #FFFCF5;
+      --bg2: #FAF7F0;
+      --ink: #1A1714;
+      --muted: #9C8E80;
+      --r: 14px;
+      --font-d: 'Playfair Display', Georgia, serif;
+      --font-b: 'Outfit', sans-serif
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    body {
+      font-family: var(--font-b);
+      background: var(--bg2);
+      color: var(--ink);
+      min-height: 100vh
+    }
+
+    .wrap {
+      max-width: 680px;
+      margin: 0 auto;
+      background: var(--bg);
+      min-height: 100vh;
+      box-shadow: 0 0 60px rgba(0, 0, 0, .06);
+      position: relative;
+      padding-bottom: 100px
+    }
+
+    header {
+      padding: 40px 24px 28px;
+      text-align: center;
+      background: linear-gradient(180deg, #FFFCF5, #FAF7F0);
+      border-bottom: 3px solid var(--accent);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      backdrop-filter: blur(10px)
+    }
+
+    header h1 {
+      font-family: var(--font-d);
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: -1px
+    }
+
+    header .tag {
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      margin-top: 6px
+    }
+
+    header .mesa-info {
+      margin-top: 10px;
+      font-size: 13px;
+      color: var(--accent);
+      font-weight: 600
+    }
+
+    .cats-nav {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 14px 24px;
+      background: var(--bg);
+      border-bottom: 1px solid rgba(0, 0, 0, .06);
+      position: sticky;
+      top: 120px;
+      z-index: 9
+    }
+
+    .cats-nav::-webkit-scrollbar {
+      display: none
+    }
+
+    .cat-btn {
+      padding: 8px 18px;
+      border-radius: 50px;
+      border: 1px solid rgba(0, 0, 0, .1);
+      background: none;
+      font-family: var(--font-b);
+      font-size: 13px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: .2s;
+      color: var(--ink)
+    }
+
+    .cat-btn.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent)
+    }
+
+    .menu-body {
+      padding: 8px 24px 24px
+    }
+
+    .cat-title {
+      font-family: var(--font-d);
+      font-style: italic;
+      font-size: 13px;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      margin: 28px 0 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px
+    }
+
+    .cat-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: rgba(26, 23, 20, .12)
+    }
+
+    .item {
+      display: flex;
+      gap: 14px;
+      padding: 16px 0;
+      border-bottom: 1px dashed rgba(26, 23, 20, .1);
+      align-items: center;
+      transition: .2s
+    }
+
+    .item:last-child {
+      border: none
+    }
+
+    .item img {
+      width: 65px;
+      height: 65px;
+      border-radius: 12px;
+      object-fit: cover;
+      flex-shrink: 0
+    }
+
+    .item .ph {
+      width: 65px;
+      height: 65px;
+      border-radius: 12px;
+      background: #f0ebe3;
+      display: grid;
+      place-items: center;
+      font-size: 24px;
+      flex-shrink: 0
+    }
+
+    .item .txt {
+      flex: 1;
+      min-width: 0
+    }
+
+    .item .txt strong {
+      font-family: var(--font-d);
+      font-size: 16px;
+      font-weight: 600;
+      display: block;
+      margin-bottom: 3px
+    }
+
+    .item .txt p {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden
+    }
+
+    .item .right {
+      text-align: right;
+      flex-shrink: 0
+    }
+
+    .item .price {
+      font-family: var(--font-d);
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--accent);
+      white-space: nowrap
+    }
+
+    .add-btn {
+      margin-top: 8px;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 2px solid var(--accent);
+      background: none;
+      color: var(--accent);
+      font-size: 18px;
+      cursor: pointer;
+      transition: .2s;
+      display: grid;
+      place-items: center
+    }
+
+    .add-btn:hover {
+      background: var(--accent);
+      color: #fff;
+      transform: scale(1.1)
+    }
+
+    .add-btn:active {
+      transform: scale(.95)
+    }
+
+    /* CART BAR */
+    .cart-bar {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 680px;
+      background: var(--ink);
+      color: #fff;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 20;
+      transition: .3s;
+      border-radius: 20px 20px 0 0;
+      cursor: pointer
+    }
+
+    .cart-bar.hidden {
+      transform: translateX(-50%) translateY(100%)
+    }
+
+    .cart-bar .info {
+      display: flex;
+      align-items: center;
+      gap: 12px
+    }
+
+    .cart-bar .badge {
+      background: var(--accent);
+      color: var(--ink);
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+      font-size: 14px
+    }
+
+    .cart-bar .total {
+      font-family: var(--font-d);
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--accent)
+    }
+
+    /* CART MODAL */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .6);
+      backdrop-filter: blur(4px);
+      z-index: 30;
+      display: none;
+      align-items: flex-end;
+      justify-content: center
+    }
+
+    .overlay.show {
+      display: flex
+    }
+
+    .cart-modal {
+      background: var(--bg);
+      width: 100%;
+      max-width: 680px;
+      max-height: 85vh;
+      border-radius: 24px 24px 0 0;
+      overflow-y: auto;
+      padding: 28px 24px;
+      animation: slideUp .3s ease
+    }
+
+    @keyframes slideUp {
+      from {
+        transform: translateY(100%)
+      }
+
+      to {
+        transform: none
+      }
+    }
+
+    .cart-modal h2 {
+      font-family: var(--font-d);
+      font-size: 26px;
+      margin-bottom: 4px
+    }
+
+    .cart-modal .sub {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 20px
+    }
+
+    .cart-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 0;
+      border-bottom: 1px solid rgba(0, 0, 0, .06)
+    }
+
+    .cart-item .ci-name {
+      flex: 1;
+      font-weight: 500;
+      font-size: 15px
+    }
+
+    .cart-item .ci-price {
+      font-family: var(--font-d);
+      font-weight: 600;
+      color: var(--accent);
+      min-width: 80px;
+      text-align: right
+    }
+
+    .qty-ctrl {
+      display: flex;
+      align-items: center;
+      gap: 6px
+    }
+
+    .qty-btn {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: 1px solid rgba(0, 0, 0, .15);
+      background: none;
+      font-size: 16px;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      transition: .2s;
+      color: var(--ink)
+    }
+
+    .qty-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent)
+    }
+
+    .qty-val {
+      font-weight: 600;
+      min-width: 20px;
+      text-align: center;
+      font-size: 15px
+    }
+
+    .cart-total {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 0;
+      font-size: 18px;
+      font-weight: 600;
+      border-top: 2px solid var(--ink)
+    }
+
+    .cart-total .ct-val {
+      font-family: var(--font-d);
+      font-size: 28px;
+      color: var(--accent)
+    }
+
+    .obs-field {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid rgba(0, 0, 0, .1);
+      border-radius: var(--r);
+      font-family: var(--font-b);
+      font-size: 14px;
+      resize: vertical;
+      min-height: 60px;
+      margin-bottom: 16px;
+      background: var(--bg2)
+    }
+
+    .obs-field:focus {
+      outline: none;
+      border-color: var(--accent)
+    }
+
+    .order-btn {
+      width: 100%;
+      padding: 16px;
+      border-radius: 50px;
+      border: none;
+      background: var(--accent);
+      color: var(--ink);
+      font-family: var(--font-b);
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: .2s
+    }
+
+    .order-btn:hover {
+      filter: brightness(1.1);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(245, 158, 11, .3)
+    }
+
+    .close-cart {
+      position: absolute;
+      top: 16px;
+      right: 20px;
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: var(--muted);
+      padding: 4px
+    }
+
+    .cart-modal {
+      position: relative
+    }
+
+    .empty-cart {
+      text-align: center;
+      padding: 40px 0;
+      color: var(--muted)
+    }
+
+    .empty-cart h4 {
+      font-family: var(--font-d);
+      font-size: 20px;
+      color: var(--ink);
+      margin-bottom: 8px
+    }
+
+    /* COMANDA */
+    .comanda-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .7);
+      backdrop-filter: blur(6px);
+      z-index: 40;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px
+    }
+
+    .comanda-overlay.show {
+      display: flex
+    }
+
+    .comanda {
+      background: #fff;
+      width: 100%;
+      max-width: 400px;
+      border-radius: 4px;
+      padding: 0;
+      font-family: 'Courier New', monospace;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, .3);
+      animation: fadeIn .3s ease
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: scale(.95)
+      }
+
+      to {
+        opacity: 1;
+        transform: none
+      }
+    }
+
+    .comanda-inner {
+      padding: 28px 24px
+    }
+
+    .comanda h3 {
+      text-align: center;
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 2px;
+      font-family: var(--font-d)
+    }
+
+    .comanda .c-tag {
+      text-align: center;
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 16px
+    }
+
+    .comanda .c-line {
+      border-top: 1px dashed #ccc;
+      margin: 12px 0
+    }
+
+    .comanda .c-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      padding: 4px 0
+    }
+
+    .comanda .c-row.item-row {
+      font-size: 14px
+    }
+
+    .comanda .c-row .c-qty {
+      color: var(--muted);
+      min-width: 35px
+    }
+
+    .comanda .c-row .c-iname {
+      flex: 1
+    }
+
+    .comanda .c-row .c-iprice {
+      text-align: right;
+      font-weight: 600;
+      min-width: 70px
+    }
+
+    .comanda .c-total {
+      display: flex;
+      justify-content: space-between;
+      font-size: 20px;
+      font-weight: 700;
+      padding: 8px 0
+    }
+
+    .comanda .c-info {
+      text-align: center;
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 12px;
+      line-height: 1.6
+    }
+
+    .comanda .c-num {
+      text-align: center;
+      font-size: 36px;
+      font-weight: 800;
+      color: var(--accent);
+      font-family: var(--font-d)
+    }
+
+    .comanda-actions {
+      display: flex;
+      gap: 10px;
+      padding: 16px 24px;
+      background: #f9f9f9;
+      border-top: 1px dashed #ccc
+    }
+
+    .comanda-actions button {
+      flex: 1;
+      padding: 12px;
+      border-radius: 50px;
+      border: none;
+      font-family: var(--font-b);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: .2s
+    }
+
+    .cmd-print {
+      background: var(--accent);
+      color: var(--ink)
+    }
+
+    .cmd-close {
+      background: none;
+      border: 1px solid rgba(0, 0, 0, .15) !important;
+      color: var(--ink)
+    }
+
+    /* MESA INPUT */
+    .mesa-modal {
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(135deg, #1A1714, #2a2520);
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: center
+    }
+
+    .mesa-modal.hidden {
+      display: none
+    }
+
+    .mesa-box {
+      text-align: center;
+      padding: 40px;
+      max-width: 400px;
+      width: 100%
+    }
+
+    .mesa-box h1 {
+      font-family: var(--font-d);
+      font-size: 36px;
+      color: #fff;
+      margin-bottom: 8px
+    }
+
+    .mesa-box .mb-tag {
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 36px
+    }
+
+    .mesa-box input {
+      width: 100%;
+      padding: 16px;
+      border-radius: var(--r);
+      border: 2px solid rgba(255, 255, 255, .1);
+      background: rgba(255, 255, 255, .05);
+      color: #fff;
+      font-family: var(--font-b);
+      font-size: 20px;
+      text-align: center;
+      font-weight: 600
+    }
+
+    .mesa-box input:focus {
+      outline: none;
+      border-color: var(--accent)
+    }
+
+    .mesa-box input::placeholder {
+      color: rgba(255, 255, 255, .3)
+    }
+
+    .mesa-box button {
+      width: 100%;
+      padding: 16px;
+      border-radius: 50px;
+      border: none;
+      background: var(--accent);
+      color: var(--ink);
+      font-family: var(--font-b);
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 16px;
+      transition: .2s
+    }
+
+    .mesa-box button:hover {
+      filter: brightness(1.1)
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%) translateY(120%);
+      background: var(--ink);
+      color: #fff;
+      padding: 13px 24px;
+      border-radius: 50px;
+      font-size: 13px;
+      font-weight: 600;
+      transition: .4s;
+      z-index: 100;
+      white-space: nowrap;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, .3)
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0)
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="mesa-modal" id="mesaModal">
+    <div class="mesa-box">
+      <h1>Bem-vindo!</h1>
+      <p class="mb-tag" id="mesaRestName">Restaurante</p>
+      <input type="text" id="mesaInput" placeholder="Seu nome ou nº da mesa" autofocus>
+      <button onclick="entrar()">Acessar Cardápio</button>
+    </div>
+  </div>
+
+  <div class="wrap" id="mainWrap" style="display:none">
+    <header>
+      <h1 id="hName">Restaurante</h1>
+      <div class="tag" id="hTag"></div>
+      <div class="mesa-info" id="hMesa"></div>
+    </header>
+    <div class="cats-nav" id="catsNav"></div>
+    <div class="menu-body" id="menuBody"></div>
+  </div>
+
+  <div class="cart-bar hidden" id="cartBar" onclick="openCart()">
+    <div class="info">
+      <div class="badge" id="cartCount">0</div><span>Ver pedido</span>
+    </div>
+    <div class="total" id="cartTotal">R$ 0,00</div>
+  </div>
+
+  <div class="overlay" id="cartOverlay" onclick="if(event.target===this)closeCart()">
+    <div class="cart-modal">
+      <button class="close-cart" onclick="closeCart()">✕</button>
+      <h2>Seu Pedido</h2>
+      <div class="sub" id="cartMesa"></div>
+      <div id="cartItems"></div>
+      <div id="cartFooter" style="display:none">
+        <div class="cart-total"><span>Total</span><span class="ct-val" id="cartTotalBig">R$ 0,00</span></div>
+        <label
+          style="font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:8px">Observações</label>
+        <textarea class="obs-field" id="obsField" placeholder="Ex: Sem cebola, ponto da carne..."></textarea>
+        <button class="order-btn" onclick="finalizarPedido()">✓ Finalizar Pedido</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="comanda-overlay" id="comandaOverlay">
+    <div class="comanda">
+      <div class="comanda-inner" id="comandaContent"></div>
+      <div class="comanda-actions">
+        <button class="cmd-close" onclick="fecharComanda()">Fechar</button>
+        <button class="cmd-print" onclick="imprimirComanda()">🖨 Imprimir</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ============ FIREBASE CONFIG ============
+    // Import the functions you need from the SDKs you need
+    import { initializeApp } from "firebase/app";
+    import { getAnalytics } from "firebase/analytics";
+    // TODO: Add SDKs for Firebase products that you want to use
+    // https://firebase.google.com/docs/web/setup#available-libraries
+
+    // Your web app's Firebase configuration
+    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+    const firebaseConfig = {
+      apiKey: "AIzaSyAVRy4_Q5Iu6EIb938JG998JbiNhai2O1I",
+      authDomain: "meu-cardapio-efd9c.firebaseapp.com",
+      projectId: "meu-cardapio-efd9c",
+      storageBucket: "meu-cardapio-efd9c.firebasestorage.app",
+      messagingSenderId: "831150539655",
+      appId: "1:831150539655:web:964a596d894ce423630922",
+      measurementId: "G-75JTX4J0V3"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    const firebaseConfig = {
+      apiKey: "COLE_SUA_API_KEY",
+      authDomain: "SEU_PROJETO.firebaseapp.com",
+      projectId: "SEU_ID_DO_PROJETO",
+      storageBucket: "SEU_PROJETO.appspot.com",
+      messagingSenderId: "000000000000",
+      appId: "1:000000000000:web:000000000000000000"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const restaurantId = new URLSearchParams(window.location.search).get('r');
+
+    let S = {
+      config: { name: 'Restaurante', tagline: '', phone: '', color: '#F59E0B' },
+      cats: [],
+      items: []
+    };
+    let cart = [];
+    let mesa = '';
+    let pedidoNum = 0;
+
+    function brl(n) { return 'R$ ' + n.toFixed(2).replace('.', ','); }
+    function esc(s) { return (s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+    function toast(m) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2500); }
+
+    // Carrega menu do Firestore
+    (async function loadMenu() {
+      if (!restaurantId) {
+        document.getElementById('mesaRestName').textContent = 'Cardápio';
+        toast('Link inválido — QR Code incorreto');
+        return;
+      }
+      try {
+        const doc = await db.collection('restaurants').doc(restaurantId).get();
+        if (doc.exists) {
+          const d = doc.data();
+          if (d.config) S.config = d.config;
+          if (d.cats && d.cats.length) S.cats = d.cats;
+          if (d.items) S.items = d.items;
+        }
+        const accent = S.config.color || '#F59E0B';
+        document.documentElement.style.setProperty('--accent', accent);
+        document.getElementById('mesaRestName').textContent = S.config.name || 'Restaurante';
+      } catch (e) {
+        document.getElementById('mesaRestName').textContent = 'Restaurante';
+        console.error('Erro ao carregar cardápio:', e);
+      }
+    })();
+
+    // MESA
+    function entrar() {
+      mesa = document.getElementById('mesaInput').value.trim() || 'Cliente';
+      document.getElementById('mesaModal').classList.add('hidden');
+      document.getElementById('mainWrap').style.display = 'block';
+      renderMenu();
+    }
+    document.getElementById('mesaInput').addEventListener('keydown', e => { if (e.key === 'Enter') entrar() });
+
+    function renderMenu() {
+      document.getElementById('hName').textContent = S.config.name || 'Restaurante';
+      document.getElementById('hTag').textContent = S.config.tagline || '';
+      document.getElementById('hMesa').textContent = '👤 ' + mesa;
+
+      const grouped = {};
+      S.items.forEach(i => { grouped[i.cat] = grouped[i.cat] || []; grouped[i.cat].push(i) });
+      const catNames = Object.keys(grouped);
+
+      // Nav
+      const nav = document.getElementById('catsNav');
+      nav.innerHTML = '<button class="cat-btn active" onclick="scrollToCat(null,this)">Todos</button>' +
+        catNames.map(c => `<button class="cat-btn" onclick="scrollToCat('${c}',this)">${c}</button>`).join('');
+
+      // Items
+      const body = document.getElementById('menuBody');
+      if (!S.items.length) { body.innerHTML = '<div class="empty-cart"><h4>Cardápio vazio</h4><p>Nenhum item disponível no momento</p></div>'; return; }
+
+      body.innerHTML = catNames.map(cat => `
+    <div class="cat-title" id="cat-${cat.replace(/\s/g, '_')}">${cat}</div>
+    ${grouped[cat].map(i => `
+      <div class="item">
+        ${i.img ? `<img src="${i.img}" alt="${esc(i.name)}">` : '<div class="ph">🍽</div>'}
+        <div class="txt"><strong>${esc(i.name)}</strong>${i.desc ? `<p>${esc(i.desc)}</p>` : ''}</div>
+        <div class="right">
+          <div class="price">${brl(i.price)}</div>
+          <button class="add-btn" onclick="addToCart(${i.id})">+</button>
+        </div>
+      </div>
+    `).join('')}
+  `).join('');
+    }
+
+    function scrollToCat(cat, btn) {
+      document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      if (!cat) { window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+      const el = document.getElementById('cat-' + cat.replace(/\s/g, '_'));
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // CART
+    function addToCart(id) {
+      const item = S.items.find(i => i.id === id);
+      if (!item) return;
+      const existing = cart.find(c => c.id === id);
+      if (existing) { existing.qty++ } else { cart.push({ id, name: item.name, price: item.price, qty: 1 }) }
+      updateCartBar();
+      toast(item.name + ' adicionado ✓');
+    }
+
+    function updateCartBar() {
+      const count = cart.reduce((s, c) => s + c.qty, 0);
+      const total = cart.reduce((s, c) => s + c.price * c.qty, 0);
+      document.getElementById('cartCount').textContent = count;
+      document.getElementById('cartTotal').textContent = brl(total);
+      document.getElementById('cartBar').classList.toggle('hidden', count === 0);
+    }
+
+    function openCart() {
+      document.getElementById('cartOverlay').classList.add('show');
+      renderCart();
+    }
+    function closeCart() { document.getElementById('cartOverlay').classList.remove('show') }
+
+    function renderCart() {
+      const box = document.getElementById('cartItems');
+      const footer = document.getElementById('cartFooter');
+      document.getElementById('cartMesa').textContent = '👤 ' + mesa;
+
+      if (!cart.length) {
+        box.innerHTML = '<div class="empty-cart"><h4>Carrinho vazio</h4><p>Adicione itens do cardápio</p></div>';
+        footer.style.display = 'none'; return;
+      }
+      footer.style.display = 'block';
+      const total = cart.reduce((s, c) => s + c.price * c.qty, 0);
+      document.getElementById('cartTotalBig').textContent = brl(total);
+
+      box.innerHTML = cart.map((c, i) => `
+    <div class="cart-item">
+      <div class="qty-ctrl">
+        <button class="qty-btn" onclick="changeQty(${i},-1)">−</button>
+        <span class="qty-val">${c.qty}</span>
+        <button class="qty-btn" onclick="changeQty(${i},1)">+</button>
+      </div>
+      <div class="ci-name">${esc(c.name)}</div>
+      <div class="ci-price">${brl(c.price * c.qty)}</div>
+    </div>
+  `).join('');
+    }
+
+    function changeQty(idx, delta) {
+      cart[idx].qty += delta;
+      if (cart[idx].qty <= 0) cart.splice(idx, 1);
+      updateCartBar();
+      renderCart();
+    }
+
+    // PEDIDO / COMANDA
+    async function finalizarPedido() {
+      if (!cart.length) { toast('Carrinho vazio'); return; }
+      pedidoNum = Math.floor(Math.random() * 9000) + 1000;
+      const obs = document.getElementById('obsField').value.trim();
+      const now = new Date();
+      const data = now.toLocaleDateString('pt-BR');
+      const hora = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      const total = cart.reduce((s, c) => s + c.price * c.qty, 0);
+      const totalItens = cart.reduce((s, c) => s + c.qty, 0);
+
+      let html = `
+    <h3>${esc(S.config.name || 'Restaurante')}</h3>
+    <div class="c-tag">${esc(S.config.tagline || 'Cardápio Digital')}</div>
+    <div class="c-line"></div>
+    <div class="c-row"><span>Data:</span><span>${data}</span></div>
+    <div class="c-row"><span>Hora:</span><span>${hora}</span></div>
+    <div class="c-row"><span>Cliente/Mesa:</span><span>${esc(mesa)}</span></div>
+    <div style="text-align:center;margin:12px 0"><span style="font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase">Pedido Nº</span><div class="c-num">#${pedidoNum}</div></div>
+    <div class="c-line"></div>
+    <div class="c-row" style="font-weight:700;margin-bottom:6px"><span class="c-qty">Qtd</span><span class="c-iname">Item</span><span class="c-iprice">Valor</span></div>
+  `;
+
+      cart.forEach(c => {
+        html += `<div class="c-row item-row"><span class="c-qty">${c.qty}x</span><span class="c-iname">${esc(c.name)}</span><span class="c-iprice">${brl(c.price * c.qty)}</span></div>`;
+      });
+
+      html += `
+    <div class="c-line"></div>
+    <div class="c-row"><span>Itens:</span><span>${totalItens}</span></div>
+    <div class="c-total"><span>TOTAL</span><span>${brl(total)}</span></div>
+    ${obs ? `<div class="c-line"></div><div style="font-size:12px"><strong>Obs:</strong> ${esc(obs)}</div>` : ''}
+    <div class="c-info">Obrigado pela preferência!<br>Aguarde seu pedido ser preparado.</div>
+  `;
+
+      document.getElementById('comandaContent').innerHTML = html;
+      closeCart();
+      document.getElementById('comandaOverlay').classList.add('show');
+
+      // Salvar pedido no Firestore (tempo real para o admin)
+      if (restaurantId) {
+        try {
+          await db.collection('restaurants').doc(restaurantId)
+            .collection('orders').add({
+              num: pedidoNum,
+              mesa,
+              data,
+              hora,
+              items: cart.map(c => ({ id: c.id, name: c.name, qty: c.qty, price: c.price })),
+              obs,
+              total,
+              status: 'pending',
+              createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        } catch (e) { console.error('Erro ao enviar pedido:', e); }
+      }
+
+      cart = [];
+      updateCartBar();
+      document.getElementById('obsField').value = '';
+    }
+
+    function fecharComanda() { document.getElementById('comandaOverlay').classList.remove('show') }
+
+    function imprimirComanda() {
+      const content = document.getElementById('comandaContent').innerHTML;
+      const w = window.open('', '', 'width=400,height=600');
+      w.document.write(`<html><head><style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Courier New',monospace;padding:20px;font-size:14px;max-width:350px;margin:0 auto}
+    h3{text-align:center;font-size:20px;margin-bottom:4px}
+    .c-tag{text-align:center;font-size:10px;color:#999;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px}
+    .c-line{border-top:1px dashed #ccc;margin:10px 0}
+    .c-row{display:flex;justify-content:space-between;font-size:13px;padding:3px 0}
+    .c-row .c-qty{min-width:30px;color:#999}
+    .c-row .c-iname{flex:1}
+    .c-row .c-iprice{text-align:right;font-weight:600;min-width:70px}
+    .c-total{display:flex;justify-content:space-between;font-size:18px;font-weight:700;padding:8px 0}
+    .c-num{text-align:center;font-size:32px;font-weight:800}
+    .c-info{text-align:center;font-size:10px;color:#999;margin-top:10px;line-height:1.6}
+  </style></head><body>${content}</body></html>`);
+      w.document.close();
+      setTimeout(() => { w.print(); w.close() }, 500);
+    }
+  </script>
+</body>
+
+</html>
