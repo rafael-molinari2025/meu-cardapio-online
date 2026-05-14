@@ -2320,6 +2320,7 @@ ${wa ? `<div class="cta"><p>Faça seu pedido</p><a href="${wa}" target="_blank">
       if (!currentUser) return;
       const uid = currentUser.uid;
       const base = (document.getElementById('githubBase')?.value || '').trim().replace(/\/$/, '');
+      if (base) localStorage.setItem('cdp_githubBase', base);
       const url = base
         ? base + '/cliente.html?r=' + uid
         : '(configure a URL do GitHub Pages acima)/cliente.html?r=' + uid;
@@ -2340,6 +2341,9 @@ ${wa ? `<div class="cta"><p>Faça seu pedido</p><a href="${wa}" target="_blank">
         if (emailEl) emailEl.textContent = user.email;
         const uidEl = document.getElementById('currentUserId');
         if (uidEl) uidEl.textContent = user.uid;
+        const savedBase = localStorage.getItem('cdp_githubBase');
+        const githubBaseEl = document.getElementById('githubBase');
+        if (savedBase && githubBaseEl && !githubBaseEl.value) githubBaseEl.value = savedBase;
         updateClientUrlHint();
       } else {
         currentUser = null;

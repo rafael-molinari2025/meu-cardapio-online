@@ -817,8 +817,12 @@
         document.documentElement.style.setProperty('--accent', accent);
         document.getElementById('mesaRestName').textContent = S.config.name || 'Restaurante';
       } catch (e) {
-        document.getElementById('mesaRestName').textContent = 'Restaurante';
+        document.getElementById('mesaRestName').textContent = 'Erro ao carregar';
         console.error('Erro ao carregar cardápio:', e);
+        const msg = e.code === 'permission-denied'
+          ? 'Acesso negado — verifique as regras do Firestore'
+          : 'Sem conexão com o servidor. Tente novamente.';
+        toast(msg);
       }
     })();
 
