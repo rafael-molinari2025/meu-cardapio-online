@@ -1165,13 +1165,13 @@
         </div>
 
         <div class="ai-section">
-          <h3><span class="spark">✦</span> Conexão com IA (API Claude)</h3>
-          <p>Cole sua chave da API Anthropic para ativar geração de textos, descrições e legendas. <a
-              href="https://console.anthropic.com/" target="_blank" style="color:var(--amber)">Criar chave grátis →</a>
+          <h3><span class="spark">✦</span> Conexão com IA (Google Gemini — gratuito)</h3>
+          <p>Cole sua chave da API Google Gemini para ativar geração de textos e descrições. <a
+              href="https://aistudio.google.com/apikey" target="_blank" style="color:var(--amber)">Criar chave grátis →</a>
           </p>
           <div class="api-config">
             <div class="status" id="apiStatus"></div>
-            <input type="password" id="apiKey" placeholder="sk-ant-api03-..." oninput="testApiKey()">
+            <input type="password" id="apiKey" placeholder="AIzaSy..." oninput="testApiKey()">
             <button class="btn btn-amber btn-sm" onclick="testApiKey()">Testar</button>
           </div>
         </div>
@@ -1630,29 +1630,31 @@
       S.apiKey = key;
       save();
       const dot = document.getElementById('apiStatus');
-      if (key && key.startsWith('sk-')) {
+      if (key && key.startsWith('AIza')) {
         dot.classList.add('ok');
-        toast('API conectada ✓');
+        toast('API Gemini conectada ✓');
       } else {
         dot.classList.remove('ok');
       }
     }
 
     async function callAI(prompt, maxTokens = 1024) {
-      if (!S.apiKey) { toast('Configure sua API key primeiro'); return null; }
+      if (!S.apiKey) { toast('Configure sua API key Gemini primeiro'); return null; }
       try {
-        const r = await fetch('https://api.anthropic.com/v1/messages', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'x-api-key': S.apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
-          body: JSON.stringify({
-            model: 'claude-sonnet-4-20250514',
-            max_tokens: maxTokens,
-            messages: [{ role: 'user', content: prompt }]
-          })
-        });
+        const r = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${S.apiKey}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: { maxOutputTokens: maxTokens }
+            })
+          }
+        );
         const d = await r.json();
-        if (d.content && d.content[0]) return d.content[0].text;
-        if (d.error) { toast('Erro: ' + d.error.message); return null; }
+        if (d.candidates?.[0]?.content?.parts?.[0]?.text) return d.candidates[0].content.parts[0].text;
+        if (d.error) { toast('Erro Gemini: ' + d.error.message); return null; }
         return null;
       } catch (e) { toast('Erro de conexão'); return null; }
     }
