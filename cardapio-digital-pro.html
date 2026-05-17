@@ -1167,7 +1167,8 @@
         <div class="ai-section">
           <h3><span class="spark">✦</span> Conexão com IA (Google Gemini — gratuito)</h3>
           <p>Cole sua chave da API Google Gemini para ativar geração de textos e descrições. <a
-              href="https://aistudio.google.com/apikey" target="_blank" style="color:var(--amber)">Criar chave grátis →</a>
+              href="https://aistudio.google.com/apikey" target="_blank" style="color:var(--amber)">Criar chave grátis
+              →</a>
           </p>
           <div class="api-config">
             <div class="status" id="apiStatus"></div>
@@ -1614,7 +1615,7 @@
 
     // ============ NAV ============
     document.querySelectorAll('.nav-btn').forEach(b => {
-      if(!b.dataset.p) return; // botões sem painel (ex: Tela do Cliente) mantêm seu próprio onclick
+      if (!b.dataset.p) return; // botões sem painel (ex: Tela do Cliente) mantêm seu próprio onclick
       b.onclick = () => {
         document.querySelectorAll('.nav-btn').forEach(x => x.classList.remove('active'));
         document.querySelectorAll('.panel').forEach(x => x.classList.remove('active'));
@@ -1642,7 +1643,7 @@
       if (!S.apiKey) { toast('Configure sua API key Gemini primeiro'); return null; }
       try {
         const r = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${S.apiKey}`,
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${S.apiKey}`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -1654,7 +1655,17 @@
         );
         const d = await r.json();
         if (d.candidates?.[0]?.content?.parts?.[0]?.text) return d.candidates[0].content.parts[0].text;
-        if (d.error) { toast('Erro Gemini: ' + d.error.message); return null; }
+        if (d.error) {
+          const msg = d.error.message || '';
+          if (msg.includes('quota') || msg.includes('RESOURCE_EXHAUSTED')) {
+            toast('Cota da API esgotada. Gere uma nova chave em aistudio.google.com');
+          } else if (msg.includes('API_KEY_INVALID') || msg.includes('invalid')) {
+            toast('API key inválida. Verifique em Configurar → API Key Gemini');
+          } else {
+            toast('Erro Gemini: ' + msg);
+          }
+          return null;
+        }
         return null;
       } catch (e) { toast('Erro de conexão'); return null; }
     }
