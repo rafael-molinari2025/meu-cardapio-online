@@ -1,4 +1,4 @@
-const CACHE = 'cardapio-v1';
+const CACHE = 'cardapio-v20250518';
 const ASSETS = ['./cliente.html', './manifest.json'];
 
 self.addEventListener('install', e => {
@@ -15,7 +15,14 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
+  // Network-first: serve fresh content, fall back to cache when offline
   e.respondWith(
-    fetch(e.request).catch(() => caches.match(e.request))
+    fetch(e.request)
+      .then(response => {
+        const clone = response.clone();
+        caches.open(CACHE).then(c => c.put(e.request, clone));
+        return response;
+      })
+      .catch(() => caches.match(e.request))
   );
 });

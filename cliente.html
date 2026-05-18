@@ -5,6 +5,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cardápio Digital</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
     href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,800;1,400&family=Outfit:wght@300;400;500;600;700&display=swap"
     rel="stylesheet">
@@ -710,6 +712,80 @@
     .toast.show {
       transform: translateX(-50%) translateY(0)
     }
+
+    /* NOTIFICAÇÃO PEDIDO PRONTO */
+    .pedido-pronto {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,.7);
+      backdrop-filter: blur(6px);
+      z-index: 200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .pedido-pronto.show {
+      display: flex;
+    }
+
+    .pedido-pronto-card {
+      background: #fff;
+      border-radius: 24px;
+      padding: 40px 32px;
+      text-align: center;
+      max-width: 360px;
+      width: 100%;
+      animation: popIn .4s cubic-bezier(.34,1.56,.64,1);
+    }
+
+    @keyframes popIn {
+      from { transform: scale(.7); opacity: 0 }
+      to   { transform: scale(1);  opacity: 1 }
+    }
+
+    .pedido-pronto-icon {
+      font-size: 64px;
+      line-height: 1;
+      margin-bottom: 16px;
+    }
+
+    .pedido-pronto-card h2 {
+      font-family: var(--font-d);
+      font-size: 28px;
+      color: var(--ink);
+      margin-bottom: 8px;
+    }
+
+    .pedido-pronto-card p {
+      color: #777;
+      font-size: 15px;
+      margin-bottom: 24px;
+    }
+
+    .pedido-pronto-card .pp-num {
+      font-size: 13px;
+      color: var(--muted);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+    }
+
+    .pedido-pronto-btn {
+      background: var(--accent);
+      color: var(--ink);
+      border: none;
+      padding: 14px 32px;
+      border-radius: 50px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      width: 100%;
+    }
   </style>
 </head>
 
@@ -764,6 +840,16 @@
         <button class="cmd-close" onclick="fecharComanda()">Fechar</button>
         <button class="cmd-print" onclick="imprimirComanda()">🖨 Imprimir</button>
       </div>
+    </div>
+  </div>
+
+  <div class="pedido-pronto" id="pedidoProntoOverlay">
+    <div class="pedido-pronto-card">
+      <div class="pedido-pronto-icon">🍽️</div>
+      <h2>Pedido Pronto!</h2>
+      <p>Seu pedido está pronto para retirada.</p>
+      <div class="pp-num" id="ppNum"></div>
+      <button class="pedido-pronto-btn" onclick="fecharPedidoPronto()">OK, obrigado!</button>
     </div>
   </div>
 
@@ -873,7 +959,12 @@
       btn.classList.add('active');
       if (!cat) { window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
       const el = document.getElementById('cat-' + cat.replace(/\s/g, '_'));
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (!el) return;
+      const header = document.querySelector('header');
+      const nav = document.getElementById('catsNav');
+      const offset = (header ? header.offsetHeight : 0) + (nav ? nav.offsetHeight : 0) + 8;
+      const top = el.getBoundingClientRect().top + window.scrollY - offset;
+      window.scrollTo({ top, behavior: 'smooth' });
     }
 
     // CART
@@ -936,7 +1027,7 @@
     // PEDIDO / COMANDA
     async function finalizarPedido() {
       if (!cart.length) { toast('Carrinho vazio'); return; }
-      pedidoNum = Math.floor(Math.random() * 9000) + 1000;
+      pedidoNum = (Date.now() % 9000) + 1000;
       const obs = document.getElementById('obsField').value.trim();
       const now = new Date();
       const data = now.toLocaleDateString('pt-BR');
@@ -972,10 +1063,10 @@
       closeCart();
       document.getElementById('comandaOverlay').classList.add('show');
 
-      // Salvar pedido no Firestore (tempo real para o admin)
+      // Salvar pedido no Firestore e escutar quando ficar pronto
       if (restaurantId) {
         try {
-          await db.collection('restaurants').doc(restaurantId)
+          const docRef = await db.collection('restaurants').doc(restaurantId)
             .collection('orders').add({
               num: pedidoNum,
               mesa,
@@ -987,6 +1078,7 @@
               status: 'pending',
               createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
+          ouvirStatusPedido(docRef, pedidoNum);
         } catch (e) { console.error('Erro ao enviar pedido:', e); }
       }
 
@@ -996,6 +1088,43 @@
     }
 
     function fecharComanda() { document.getElementById('comandaOverlay').classList.remove('show') }
+
+    let _orderUnsubscribe = null;
+
+    function ouvirStatusPedido(docRef, num) {
+      if (_orderUnsubscribe) _orderUnsubscribe();
+      _orderUnsubscribe = docRef.onSnapshot(snap => {
+        const status = snap.data()?.status;
+        if (status === 'ready') {
+          _orderUnsubscribe();
+          _orderUnsubscribe = null;
+          document.getElementById('ppNum').textContent = 'Pedido #' + num;
+          document.getElementById('pedidoProntoOverlay').classList.add('show');
+          tocarSomPronto();
+        }
+      });
+    }
+
+    function fecharPedidoPronto() {
+      document.getElementById('pedidoProntoOverlay').classList.remove('show');
+    }
+
+    function tocarSomPronto() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        [[523, 0], [659, 0.15], [784, 0.3], [1047, 0.5]].forEach(([freq, t]) => {
+          const o = ctx.createOscillator();
+          const g = ctx.createGain();
+          o.connect(g); g.connect(ctx.destination);
+          o.frequency.value = freq;
+          o.type = 'sine';
+          g.gain.setValueAtTime(0.3, ctx.currentTime + t);
+          g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + 0.4);
+          o.start(ctx.currentTime + t);
+          o.stop(ctx.currentTime + t + 0.4);
+        });
+      } catch (_) {}
+    }
 
     function imprimirComanda() {
       const content = document.getElementById('comandaContent').innerHTML;

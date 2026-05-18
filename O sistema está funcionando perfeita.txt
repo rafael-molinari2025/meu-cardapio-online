@@ -1,0 +1,22 @@
+O sistema está funcionando perfeitamente! Aqui está o resumo do que foi criado:
+
+✅ Tela do Cliente Criada — cliente.html
+O sistema agora tem duas partes integradas:
+
+Fluxo do Cliente:
+Tela de boas-vindas — Cliente informa nome ou nº da mesa
+Cardápio digital — Visualiza itens organizados por categoria com navegação por abas
+Carrinho de pedidos — Botão "+" adiciona itens, barra fixa no rodapé mostra total
+Modal do carrinho — Controle de quantidade (+/−), campo de observações e botão finalizar
+Comanda — Gerada automaticamente com:
+Nome do restaurante
+Data e hora
+Nº do pedido (único)
+Cliente/Mesa
+Lista de itens com quantidades e valores
+Total para pagamento
+Botão de impressão
+Integração com o Painel Admin:
+Os dados do cardápio são compartilhados via localStorage — tudo que o admin cadastra no cardapio-digital-pro.html aparece automaticamente no cliente.html
+Botão "👁 Tela do Cliente" adicionado na sidebar do painel admin
+Pedidos são salvos no localStorage (cdp_pedidos) para consulta posterior

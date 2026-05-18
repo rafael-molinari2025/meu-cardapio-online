@@ -1,0 +1,175 @@
+=========================================================
+  GUIA DE CONFIGURAÇÃO — FIREBASE + GITHUB PAGES
+  Cardápio Digital Pro · IA Edition
+=========================================================
+
+VISÃO GERAL
+-----------
+Agora o sistema usa Firebase para salvar dados na nuvem.
+Qualquer celular que abrir o link do cardápio verá o menu
+atualizado, e os pedidos chegam em tempo real no seu painel.
+
+
+PASSO 1 — CRIAR PROJETO NO FIREBASE
+------------------------------------
+1. Acesse: https://console.firebase.google.com/
+2. Clique em "Adicionar projeto"
+3. Dê um nome (ex: meu-cardapio)
+4. Pode desativar o Google Analytics (opcional)
+5. Clique em "Criar projeto"
+
+
+PASSO 2 — ATIVAR AUTHENTICATION
+--------------------------------
+1. No menu lateral, clique em "Authentication"
+2. Clique em "Começar"
+3. Na aba "Sign-in method", ative "E-mail/senha"
+4. Salve
+
+
+PASSO 3 — CRIAR BANCO DE DADOS (FIRESTORE)
+-------------------------------------------
+1. No menu lateral, clique em "Firestore Database"
+2. Clique em "Criar banco de dados"
+3. Escolha "Iniciar no modo de produção"
+4. Selecione a região "southamerica-east1 (São Paulo)" → Avançar
+5. Aguarde a criação
+
+
+PASSO 4 — CONFIGURAR REGRAS DE SEGURANÇA
+-----------------------------------------
+1. No Firestore, clique na aba "Regras"
+2. Apague o conteúdo atual e cole o seguinte:
+
+------------------------------------------------------------
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /restaurants/{restaurantId} {
+      // Cardápio é público (clientes leem sem login)
+      allow read: if true;
+      // Só o dono do restaurante pode editar
+      allow write: if request.auth != null
+                   && request.auth.uid == restaurantId;
+
+      match /orders/{orderId} {
+        // Só o admin vê os pedidos
+        allow read: if request.auth != null
+                    && request.auth.uid == restaurantId;
+        // Clientes podem criar pedidos (sem login)
+        allow create: if true;
+        // Só o admin atualiza/deleta pedidos
+        allow update, delete: if request.auth != null
+                               && request.auth.uid == restaurantId;
+      }
+    }
+  }
+}
+------------------------------------------------------------
+
+3. Clique em "Publicar"
+
+
+PASSO 5 — OBTER A CONFIGURAÇÃO DO FIREBASE
+-------------------------------------------
+1. No menu lateral, clique em "Visão geral do projeto" (ícone ⚙)
+2. Clique em "Configurações do projeto"
+3. Role até "Seus aplicativos" → clique em "</>  Web"
+4. Dê um apelido (ex: cardapio-web) → clique em "Registrar app"
+5. Você verá um bloco assim:
+
+   const firebaseConfig = {
+     apiKey: "AIzaSy...",
+     authDomain: "meu-cardapio.firebaseapp.com",
+     projectId: "meu-cardapio",
+     storageBucket: "meu-cardapio.appspot.com",
+     messagingSenderId: "123456789",
+     appId: "1:123456789:web:abc123..."
+   };
+
+6. COPIE esse bloco
+
+
+PASSO 6 — COLAR A CONFIGURAÇÃO NOS ARQUIVOS HTML
+--------------------------------------------------
+Você precisará substituir o bloco de configuração placeholder
+em DOIS arquivos:
+
+  Arquivo 1: cardapio-digital-pro.html
+  Busque por: "COLE_SUA_API_KEY"
+  (seção: // ============ FIREBASE CONFIG ============)
+
+  Arquivo 2: cliente.html
+  Busque por: "COLE_SUA_API_KEY"
+  (início do bloco <script>)
+
+Em ambos os arquivos, substitua o bloco inteiro:
+
+  const firebaseConfig = {
+    apiKey: "COLE_SUA_API_KEY",
+    authDomain: "SEU_PROJETO.firebaseapp.com",
+    ...
+  };
+
+pelo bloco que você copiou no Passo 5.
+
+
+PASSO 7 — HOSPEDAR NO GITHUB PAGES
+-------------------------------------
+1. Crie uma conta em https://github.com/ se não tiver
+2. Crie um novo repositório PÚBLICO em https://github.com/new
+   - Nome sugerido: meu-cardapio
+3. Faça upload dos 4 arquivos:
+   • cardapio-digital-pro.html
+   • cliente.html
+   • manifest.json
+   • sw.js
+4. No repositório, vá em Settings → Pages
+5. Em "Source", selecione "Deploy from a branch"
+6. Branch: "main" → pasta: "/ (root)" → Salve
+7. Aguarde ~2 minutos. A URL ficará assim:
+   https://seuusuario.github.io/meu-cardapio/
+
+
+PASSO 8 — CONFIGURAR O QR CODE
+--------------------------------
+1. Abra cardapio-digital-pro.html no navegador
+2. Faça login (crie sua conta na primeira vez)
+3. Configure seu restaurante normalmente
+4. Vá em "Publicar & QR"
+5. No campo "URL base do GitHub Pages", cole:
+   https://seuusuario.github.io/meu-cardapio
+6. A URL completa do cliente será gerada automaticamente:
+   https://seuusuario.github.io/meu-cardapio/cliente.html?r=SEU_UID
+7. Cole essa URL no campo "QR Code" e clique em "Gerar QR Code"
+8. Imprima e coloque nas mesas!
+
+
+FLUXO COMPLETO APÓS CONFIGURAÇÃO
+----------------------------------
+1. Cliente aponta o celular para o QR Code
+2. Abre cliente.html com ?r=SEU_UID
+3. Vê o cardápio carregado do Firebase
+4. Faz o pedido → pedido vai para o Firebase
+5. Você vê o pedido em tempo real no painel "Pedidos"
+6. Atualiza status: Aceitar → Pronto ✓ → Entregue
+
+
+DÚVIDAS FREQUENTES
+-------------------
+P: Preciso pagar pelo Firebase?
+R: Não. O plano Spark (gratuito) suporta até 1.000 usuários
+   simultâneos e 50.000 leituras/dia — mais que suficiente
+   para um restaurante.
+
+P: E o GitHub Pages?
+R: Completamente gratuito para repositórios públicos.
+
+P: Os dados ficam salvos mesmo se eu fechar o computador?
+R: Sim. O Firebase guarda tudo na nuvem.
+
+P: Posso usar em vários celulares ao mesmo tempo?
+R: Sim. Cada mesa abre a mesma URL e os pedidos chegam
+   todos no mesmo painel.
+
+=========================================================
